@@ -47,18 +47,18 @@ const { ListenerCreated } = require('@janiscommerce/client-creator');
 module.exports.handler = (...args) => ServerlessHandler.handle(ListenerCreated, ...args);
 ```
 
-### ClientModelIndexes
+### clientModelIndexes
 At `path/to/root/[MS_PATH]/schemas/mongo/core.js`
 
 ```js
 'use strict';
 
-const { ClientModelIndexes } =  require('@janiscommerce/client-creator');
+const { clientModelIndexes } =  require('@janiscommerce/client-creator');
 
 module.exports = {
 	core: {
         //...ohter indexes
-		...ClientModelIndexes
+		...clientModelIndexes
 	}
 };
 
