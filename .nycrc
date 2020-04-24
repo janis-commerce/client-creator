@@ -4,7 +4,9 @@
     "tests/",
     "mocks/",
     ".eslintrc.js",
-    ".travis.yml"
+    ".travis.yml",
+    "index.js",
+    "lib/client-model-indexes.js"
   ],
   "extension": [
     ".js"
