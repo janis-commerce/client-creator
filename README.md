@@ -13,7 +13,7 @@ npm install @janiscommerce/client-creator
 
 After installing this package you should create or update the following files:
 
-###ClientModel
+### ClientModel
 At `path/to/root/[MS_PATH]/models/client.js`
 
 ```js
@@ -24,7 +24,7 @@ module.exports = ModelClient;
 
 ```
 
-###APICreate
+### APICreate
 At `path/to/root/[MS_PATH]/src/api/client/post.js`
 
 ```js
@@ -34,7 +34,7 @@ const { APICreate } = require('@janiscommerce/client-creator')
 module.exports = APICreate;
 ```
 
-###ListenerCreated
+### ListenerCreated
 At `path/to/root/[MS_PATH]/src/event-listeners/id/client/created.js`
 
 ```js
@@ -44,7 +44,7 @@ const { ListenerCreated } = require('@janiscommerce/client-creator')
 module.exports = ListenerCreated;
 ```
 
-###ClientModelIndexes
+### ClientModelIndexes
 At `path/to/root/[MS_PATH]/schemas/mongo/core.js`
 
 ```js
@@ -61,7 +61,7 @@ module.exports = {
 
 ```
 
-###clientFunctions
+### clientFunctions
 At `path/to/root/[MS_PATH]/serverless.js`
 
 ```js
@@ -95,26 +95,12 @@ Finally, create or update `path/to/root/[MS_PATH]/.nycrc` to avoid coverage leak
 ```
 {
   "exclude": [
-    ".eslintrc.js",
-    "coverage/",
-    "tests/",
-    "schemas/mongo/",
-    "stacks-map.js",
     //... your files
     src/event-listeners/id/client/created.js
     src/models/client.js,
     src/api/client/post.js
-  ],
-  "extension": [
-    ".js"
-  ],
-  "cache": true,
-  "all": true,
-  "default-excludes": true,
-  "check-coverage": true,
-  "lines": 90,
-  "statements": 90,
-  "functions": 90,
-  "branches": 90
+  ]
 }
 ```
+
+:warning: If exists any customization of the files, do not add the file to the .nyrcr and add the corresponding tests.
