@@ -82,8 +82,7 @@ module.exports = helper({
 }, {
 	package: {
 		include: [
-			'node_modules/@janiscommerce/mongodb/**',
-			'schemas/mongo/**'
+			// your packages
 		]
 	}
 });
