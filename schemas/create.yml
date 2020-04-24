@@ -1,0 +1,35 @@
+paths:
+
+    /client:
+      post:
+        x-janis-namespace: client
+        x-janis-method: create
+        operationId: createClient
+        tags:
+          - Client
+        summary: Create a new client
+        security:
+          - ApiKey: []
+            ApiSecret: []
+        requestBody:
+          description: The clients to create
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Clients"
+        responses:
+          "200":
+            description: Client created
+            content:
+              application/json:
+                schema:
+                  type: object
+          "400":
+            $ref: "#/components/responses/BadRequest"
+          "401":
+            $ref: "#/components/responses/Unauthorized"
+          "403":
+            $ref: "#/components/responses/Forbidden"
+          "500":
+            $ref: "#/components/responses/InternalError"
