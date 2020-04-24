@@ -7,45 +7,50 @@
 
 ## Installation
 ```sh
-npm install client-creator
+npm install @janiscommerce/client-creator
 ```
 ## Configuration
 
 After installing this package you should create or update the following files:
 
-- ClientModel: at `path/to/root/[MS_PATH]/models/client.js`
+###ClientModel
+At `path/to/root/[MS_PATH]/models/client.js`
 
 ```js
 'use strict';
-const {ModelClient} = require('@janiscommerce/client-creator')
+const { ModelClient } = require('@janiscommerce/client-creator')
 
 module.exports = ModelClient;
 
 ```
 
-- APICreate: at `path/to/root/[MS_PATH]/src/api/client/post.js`
+###APICreate
+At `path/to/root/[MS_PATH]/src/api/client/post.js`
 
 ```js
 'use strict';
-const {APICreate} = require('@janiscommerce/client-creator')
+const { APICreate } = require('@janiscommerce/client-creator')
 
 module.exports = APICreate;
 ```
-- ListenerCreated: at `path/to/root/[MS_PATH]/src/event-listeners/id/client/created.js`
+
+###ListenerCreated
+At `path/to/root/[MS_PATH]/src/event-listeners/id/client/created.js`
 
 ```js
 'use strict';
-const {ListenerCreated} = require('@janiscommerce/client-creator')
+const { ListenerCreated } = require('@janiscommerce/client-creator')
 
 module.exports = ListenerCreated;
 ```
 
-- ClientModelIndexes: at `path/to/root/[MS_PATH]/schemas/mongo/core.js`
+###ClientModelIndexes
+At `path/to/root/[MS_PATH]/schemas/mongo/core.js`
 
 ```js
 'use strict';
 
-const {ClientModelIndexes} =  require('@janiscommerce/client-creator');
+const { ClientModelIndexes } =  require('@janiscommerce/client-creator');
 
 module.exports = {
 	core: {
@@ -55,7 +60,9 @@ module.exports = {
 };
 
 ```
-- clientFunctions: at `path/to/root/[MS_PATH]/serverless.js`
+
+###clientFunctions
+At `path/to/root/[MS_PATH]/serverless.js`
 
 ```js
 'use strict';
@@ -63,7 +70,7 @@ module.exports = {
 const { helper } = require('sls-helper'); // eslint-disable-line
 const Settings = require('@janiscommerce/settings');
 const functions = require('./serverless/functions.json');
-const {clientFunctions} =  require('@janiscommerce/client-creator');
+const { clientFunctions } =  require('@janiscommerce/client-creator');
 
 
 module.exports = helper({
@@ -84,7 +91,7 @@ module.exports = helper({
 
 ```
 
-Finally, create or update `path/to/root/[MS_PATH]/.nycrc` to void coverage leaks:
+Finally, create or update `path/to/root/[MS_PATH]/.nycrc` to avoid coverage leaks:
 ```
 {
   "exclude": [
