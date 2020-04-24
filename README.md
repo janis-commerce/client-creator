@@ -88,9 +88,8 @@ module.exports = helper({
 		]
 	}
 });
-
-
 ```
+:warning: If they exist, delete the functions from the` path/to/root/[MS_PATH]/serverless/functions.json` file.
 
 Finally, create or update `path/to/root/[MS_PATH]/.nycrc` to avoid coverage leaks:
 ```
