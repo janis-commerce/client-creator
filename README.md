@@ -40,9 +40,11 @@ At `path/to/root/[MS_PATH]/src/event-listeners/id/client/created.js`
 
 ```js
 'use strict';
-const { ListenerCreated } = require('@janiscommerce/client-creator')
 
-module.exports = ListenerCreated;
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerCreated } = require('@janiscommerce/client-creator');
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ListenerCreated, ...args);
 ```
 
 ### ClientModelIndexes

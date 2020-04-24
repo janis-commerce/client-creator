@@ -3,8 +3,11 @@
 const EventListenerTest = require('@janiscommerce/event-listener-test');
 const MongoDBIndexCreator = require('@janiscommerce/mongodb-index-creator');
 const Settings = require('@janiscommerce/settings');
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
 const ClientCreatedListener = require('../lib/listener-created');
 const ClientModel = require('../lib/model-client');
+
+const handler = (...args) => ServerlessHandler.handle(ClientCreatedListener, ...args);
 
 describe('Client Created Listener', async () => {
 
@@ -46,7 +49,7 @@ describe('Client Created Listener', async () => {
 		dbPassword: fakeFullSettings.newClients.password
 	};
 
-	await EventListenerTest(ClientCreatedListener.handler, [
+	await EventListenerTest(handler, [
 
 		{
 			description: 'Should return 400 when the event has no ID',
