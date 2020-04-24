@@ -4,7 +4,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/janis-commerce/client-creator/badge.svg?branch=master)](https://coveralls.io/github/janis-commerce/client-creator?branch=master)
 
 
-
+## Introduction
+This package includes all the generic functionality of the creation of a client at the services. It main purpose is to avoid code repetition. 
 ## Installation
 ```sh
 npm install @janiscommerce/client-creator
@@ -68,7 +69,6 @@ At `path/to/root/[MS_PATH]/serverless.js`
 'use strict';
 
 const { helper } = require('sls-helper'); // eslint-disable-line
-const Settings = require('@janiscommerce/settings');
 const functions = require('./serverless/functions.json');
 const { clientFunctions } =  require('@janiscommerce/client-creator');
 
