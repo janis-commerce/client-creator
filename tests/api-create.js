@@ -3,8 +3,13 @@
 const APITest = require('@janiscommerce/api-test');
 const MongoDBIndexCreator = require('@janiscommerce/mongodb-index-creator');
 const Settings = require('@janiscommerce/settings');
+const mockRequire = require('mock-require');
+const path = require('path');
 const ClientCreateAPI = require('../lib/api-create');
 const ClientModel = require('../lib/model-client');
+
+const fakeClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'models', 'client');
+const fakeWrongClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'client');
 
 describe('APIs', () => {
 
@@ -53,19 +58,15 @@ describe('APIs', () => {
 						]
 					}
 				},
+				session: true,
 				response: {
 					code: 200
 				},
 				before: sandbox => {
-
-					sandbox.stub(Settings, 'get')
-						.returns(fakeSettings);
-
-					sandbox.stub(ClientModel.prototype, 'multiSave')
-						.resolves(true);
-
-					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
-						.resolves();
+					mockRequire(fakeClientPath, ClientModel);
+					sandbox.stub(Settings, 'get').returns(fakeSettings);
+					sandbox.stub(ClientModel.prototype, 'multiSave').resolves(true);
+					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases').resolves();
 				},
 				after: (res, sandbox) => {
 
@@ -78,8 +79,8 @@ describe('APIs', () => {
 							dbDatabase: 'janis-other-client'
 						}
 					]);
-
 					sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientDatabases);
+					mockRequire.stop(fakeClientPath);
 				}
 			},
 			{
@@ -95,21 +96,17 @@ describe('APIs', () => {
 				response: {
 					code: 200
 				},
+				session: true,
 				before: sandbox => {
 
-					sandbox.stub(Settings, 'get')
-						.returns(fakeFullSettings);
-
-					sandbox.stub(ClientModel.prototype, 'multiSave')
-						.resolves(true);
-
-					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
-						.resolves();
+					mockRequire(fakeClientPath, ClientModel);
+					sandbox.stub(Settings, 'get').returns(fakeFullSettings);
+					sandbox.stub(ClientModel.prototype, 'multiSave').resolves(true);
+					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases').resolves();
 				},
 				after: (res, sandbox) => {
 
-					sandbox.assert.calledOnce(ClientModel.prototype.multiSave);
-					sandbox.assert.calledWithExactly(ClientModel.prototype.multiSave, [
+					sandbox.assert.calledOnceWithExactly(ClientModel.prototype.multiSave, [
 						expectedFullClientObject,
 						{
 							...expectedFullClientObject,
@@ -117,8 +114,8 @@ describe('APIs', () => {
 							dbDatabase: 'janis-other-client'
 						}
 					]);
-
 					sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientDatabases);
+					mockRequire.stop(fakeClientPath);
 				}
 			},
 			{
@@ -133,22 +130,18 @@ describe('APIs', () => {
 				},
 				before: sandbox => {
 
-					sandbox.stub(Settings, 'get')
-						.returns(fakeSettings);
-
-					sandbox.stub(ClientModel.prototype, 'multiSave')
-						.throws();
-
-					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
-						.resolves();
+					mockRequire(fakeClientPath, ClientModel);
+					sandbox.stub(Settings, 'get').returns(fakeSettings);
+					sandbox.stub(ClientModel.prototype, 'multiSave').throws();
+					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases').resolves();
 				},
+				session: true,
 				after: (res, sandbox) => {
 
-					sandbox.assert.calledOnce(ClientModel.prototype.multiSave);
-					sandbox.assert.calledWithExactly(ClientModel.prototype.multiSave, [
+					mockRequire.stop(fakeClientPath);
+					sandbox.assert.calledOnceWithExactly(ClientModel.prototype.multiSave, [
 						expectedClientObject
 					]);
-
 					sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientDatabases);
 				}
 			},
@@ -162,24 +155,20 @@ describe('APIs', () => {
 				response: {
 					code: 500
 				},
+				session: true,
 				before: sandbox => {
 
-					sandbox.stub(Settings, 'get')
-						.returns(fakeSettings);
-
-					sandbox.stub(ClientModel.prototype, 'multiSave')
-						.resolves();
-
-					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
-						.throws();
+					mockRequire(fakeClientPath, ClientModel);
+					sandbox.stub(Settings, 'get').returns(fakeSettings);
+					sandbox.stub(ClientModel.prototype, 'multiSave').resolves();
+					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases').throws();
 				},
 				after: (res, sandbox) => {
 
-					sandbox.assert.calledOnce(ClientModel.prototype.multiSave);
-					sandbox.assert.calledWithExactly(ClientModel.prototype.multiSave, [
+					mockRequire.stop(fakeClientPath);
+					sandbox.assert.calledOnceWithExactly(ClientModel.prototype.multiSave, [
 						expectedClientObject
 					]);
-
 					sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientDatabases);
 				}
 			},
@@ -188,6 +177,7 @@ describe('APIs', () => {
 				request: {
 					data: ['something']
 				},
+				session: true,
 				response: {
 					code: 400
 				}
@@ -199,8 +189,37 @@ describe('APIs', () => {
 						clients: { some: 'object' }
 					}
 				},
+				session: true,
 				response: {
 					code: 400
+				}
+			},
+			{
+				description: 'Should return 400 when the client model is not in the corresponding path',
+				request: {
+					data: {
+						clients: [
+							'some-client',
+							'other-client'
+						]
+					}
+				},
+				session: true,
+				response: {
+					code: 500
+				},
+				before: sandbox => {
+					mockRequire(fakeWrongClientPath, ClientModel);
+					sandbox.stub(Settings, 'get').returns(fakeSettings);
+					sandbox.stub(ClientModel.prototype, 'multiSave').resolves(true);
+					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases').resolves();
+				},
+				after: (res, sandbox) => {
+
+					sandbox.assert.notCalled(ClientModel.prototype.multiSave);
+					sandbox.assert.notCalled(ClientModel.prototype.multiSave);
+					sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientDatabases);
+					mockRequire.stop(fakeClientPath);
 				}
 			}
 		]);

@@ -92,9 +92,9 @@ module.exports = helper({
 :warning: If they exist, delete the functions from the` path/to/root/[MS_PATH]/serverless/functions.json` file.
 
 ### Schemas
-Add de schemas for the Client Created event listener and the Create Client API post. 
+Add schemas for the Client Created event listener and the Create Client API post. Subscribe to events.
 
-At ` path/to/root/[MS_PATH]/schemas/client/` add these two files: 
+At ` path/to/root/[MS_PATH]/schemas/client/` add these two files:
 - [create.yml](schemas/create.yml)
 - [base.yml](schemas/base.yml)
 
@@ -102,6 +102,8 @@ At ` path/to/root/[MS_PATH]/schemas/client/` add these two files:
 At ` path/to/root/[MS_PATH]/schemas/event-listeners/id/client` add this file: 
 - [created.yml](schemas/created.yml)
 
+At ` path/to/root/[MS_PATH]/events/src/id/` add this file: 
+- [client.yml](schemas/client.yml)
 
 
 Finally, create or update `path/to/root/[MS_PATH]/.nycrc` to avoid coverage leaks:

@@ -6,7 +6,7 @@
 		"mustHaveClient": false,
 		"timeout": 60,
 		"package": {
-			"include": ["schemas/mongo/**"]
+			"include": ["schemas/mongo/**", "src/models/client.js"]
 		}
 	}],
 
@@ -15,8 +15,7 @@
 		"authorizer": "ServiceNoClientAuthorizer",
 		"timeout": 60,
 		"package": {
-			"include": ["schemas/mongo/**"]
+			"include": ["schemas/mongo/**", "src/models/client.js"]
 		}
 	}]
-
 ]

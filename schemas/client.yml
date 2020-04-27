@@ -1,0 +1,6 @@
+- service: id
+  entity: client
+  event: created
+  listeners:
+    - namespace: client
+      method: created-listener
