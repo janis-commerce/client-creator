@@ -15,7 +15,7 @@
 		"authorizer": "ServiceNoClientAuthorizer",
 		"timeout": 60,
 		"package": {
-			"include": ["schemas/mongo/**", "src/models/client.js"]
+			"include": ["schemas/mongo/**"]
 		}
 	}]
 ]
