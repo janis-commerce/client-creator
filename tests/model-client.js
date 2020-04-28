@@ -28,7 +28,7 @@ describe('ClientModel', () => {
 		});
 
 		it('Should return false when shouldCreateLogs', () => {
-			assert.deepStrictEqual(ClientModel.shouldCreateLogs(), false);
+			assert.deepStrictEqual(ClientModel.shouldCreateLogs, false);
 		});
 	});
 });
