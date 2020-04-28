@@ -6,8 +6,8 @@ const path = require('path');
 const InstanceGetter = require('../lib/helper/instance-getter');
 const ClientModel = require('../lib/model-client');
 
-const fakeClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'models', 'client');
-
+const fakeClientPath = path.join(process.cwd(), 'models', 'client');
+const fakeClientPathMS = path.join(process.cwd(), 'ms_path', 'models', 'client');
 
 describe('InstanceGetter', () => {
 
@@ -15,20 +15,25 @@ describe('InstanceGetter', () => {
 
 		beforeEach(() => {
 			mockRequire(fakeClientPath, ClientModel);
+			mockRequire(fakeClientPathMS, ClientModel);
 		});
 
 		afterEach(() => {
 			mockRequire.stop(fakeClientPath);
-		});
-
-		it('should return the class', () => {
-			assert.deepStrictEqual(InstanceGetter.getModelClass('client'), ClientModel);
+			mockRequire.stop(fakeClientPathMS);
 		});
 
 		it('should return the class when the enviroment variable is not defined', () => {
 
-			delete(process.env.MS_PATH);
+			delete (process.env.MS_PATH);
 			assert.deepStrictEqual(InstanceGetter.getModelClass('client'), ClientModel);
+		});
+
+		it('should return the class when the enviroment variable is defined', () => {
+
+			process.env.MS_PATH = 'ms_path';
+			assert.deepStrictEqual(InstanceGetter.getModelClass('client'), ClientModel);
+			delete (process.env.MS_PATH);
 		});
 
 		it('should throw an error when path doesn not exists', () => {
