@@ -25,6 +25,12 @@ describe('InstanceGetter', () => {
 			assert.deepStrictEqual(InstanceGetter.getModelClass('client'), ClientModel);
 		});
 
+		it('should return the class when the enviroment variable is not defined', () => {
+
+			delete(process.env.MS_PATH);
+			assert.deepStrictEqual(InstanceGetter.getModelClass('client'), ClientModel);
+		});
+
 		it('should throw an error when path doesn not exists', () => {
 			assert.throws(() => InstanceGetter.getModelClass('fake'), Error);
 		});
