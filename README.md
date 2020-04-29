@@ -57,7 +57,7 @@ const { clientModelIndexes } = require('@janiscommerce/client-creator');
 module.exports = {
 	core: {
 		//...ohter indexes
-		...clientModelIndexes
+		...clientModelIndexes()
 	}
 };
 ```
