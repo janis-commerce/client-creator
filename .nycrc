@@ -6,7 +6,6 @@
     ".eslintrc.js",
     ".travis.yml",
     "index.js",
-    "lib/client-model-indexes.js",
     "lib/client-functions.js"
   ],
   "extension": [
