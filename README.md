@@ -15,18 +15,17 @@ npm install @janiscommerce/client-creator
 After installing this package you should create or update the following files:
 
 ### ClientModel
-At `path/to/root/[MS_PATH]/models/client.js`
+At `./[MS_PATH]/models/client.js`
 
 ```js
 'use strict';
 const { ModelClient } = require('@janiscommerce/client-creator')
 
 module.exports = ModelClient;
-
 ```
 
 ### APICreate
-At `path/to/root/[MS_PATH]/src/api/client/post.js`
+At `./[MS_PATH]/api/client/post.js`
 
 ```js
 'use strict';
@@ -36,7 +35,7 @@ module.exports = APICreate;
 ```
 
 ### ListenerCreated
-At `path/to/root/[MS_PATH]/src/event-listeners/id/client/created.js`
+At `./[MS_PATH]/event-listeners/id/client/created.js`
 
 ```js
 'use strict';
@@ -48,7 +47,7 @@ module.exports.handler = (...args) => ServerlessHandler.handle(ListenerCreated, 
 ```
 
 ### clientModelIndexes
-At `path/to/root/[MS_PATH]/schemas/mongo/core.js`
+At `./schemas/mongo/core.js`
 
 ```js
 'use strict';
@@ -57,15 +56,14 @@ const { clientModelIndexes } = require('@janiscommerce/client-creator');
 
 module.exports = {
 	core: {
-        //...ohter indexes
+		//...ohter indexes
 		...clientModelIndexes
 	}
 };
-
 ```
 
 ### clientFunctions
-At `path/to/root/[MS_PATH]/serverless.js`
+At `./serverless.js`
 
 ```js
 'use strict';
@@ -94,19 +92,19 @@ module.exports = helper({
 ### Schemas
 Add schemas for the Client Created event listener and the Create Client API post. Subscribe to events.
 
-At ` path/to/root/[MS_PATH]/schemas/client/` add these two files:
+At ` ./schemas/client/` add these two files:
 - [create.yml](schemas/create.yml)
 - [base.yml](schemas/base.yml)
 
 
-At ` path/to/root/[MS_PATH]/schemas/event-listeners/id/client` add this file: 
+At ` ./schemas/event-listeners/id/client` add this file: 
 - [created.yml](schemas/created.yml)
 
-At ` path/to/root/[MS_PATH]/events/src/id/` add this file: 
+At ` ./events/src/id/` add this file: 
 - [client.yml](schemas/client.yml)
 
 
-Finally, create or update `path/to/root/[MS_PATH]/.nycrc` to avoid coverage leaks:
+Finally, create or update `./.nycrc` to avoid coverage leaks:
 ```
 {
   "exclude": [
