@@ -3,7 +3,7 @@
 const APICreate = require('./lib/api-create');
 const ModelClient = require('./lib/model-client');
 const ListenerCreated = require('./lib/listener-created');
-const clientFunctions = require('./lib/client-functions.json');
+const clientFunctions = require('./lib/client-functions');
 const clientModelIndexes = require('./lib/client-model-indexes');
 
 module.exports = {
