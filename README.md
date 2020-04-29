@@ -87,7 +87,7 @@ module.exports = helper({
 	}
 });
 ```
-:warning: If they exist, delete the functions from the` path/to/root/[MS_PATH]/serverless/functions.json` file.
+:warning: If they exist, delete the functions from the `./serverless/functions.json` file.
 
 ### Schemas
 Add schemas for the Client Created event listener and the Create Client API post. Subscribe to events.
