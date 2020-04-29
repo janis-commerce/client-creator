@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.3] - 2020-04-29
+### Fixed
+- Fix client-model include
+- Fix client-functions bad include on `index.js`
+
 ## [1.0.2] - 2020-04-29
 ### Fixed
 - Some README.md path fixes
