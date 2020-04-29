@@ -53,7 +53,7 @@ At `path/to/root/[MS_PATH]/schemas/mongo/core.js`
 ```js
 'use strict';
 
-const { clientModelIndexes } =  require('@janiscommerce/client-creator');
+const { clientModelIndexes } = require('@janiscommerce/client-creator');
 
 module.exports = {
 	core: {
