@@ -2,5 +2,5 @@
   entity: client
   event: created
   listeners:
-    - namespace: client
+    - namespace: id-client
       method: created-listener

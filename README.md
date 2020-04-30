@@ -79,12 +79,6 @@ module.exports = helper({
         ...functions,
         ...clientFunctions
 	]
-}, {
-	package: {
-		include: [
-			// your packages
-		]
-	}
 });
 ```
 :warning: If they exist, delete the functions from the `./serverless/functions.json` file.
@@ -103,15 +97,14 @@ At ` ./schemas/event-listeners/id/client` add this file:
 At ` ./events/src/id/` add this file: 
 - [client.yml](schemas/client.yml)
 
-
 Finally, create or update `./.nycrc` to avoid coverage leaks:
 ```
 {
   "exclude": [
     //... your files
-    src/event-listeners/id/client/created.js
-    src/models/client.js,
-    src/api/client/post.js
+    "src/event-listeners/id/client/created.js",
+    "src/models/client.js,
+    "src/api/client/post.js"
   ]
 }
 ```

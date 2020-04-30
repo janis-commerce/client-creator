@@ -1,19 +1,19 @@
 components:
 
-    schemas:
+  schemas:
 
-      Clients:
-        description: The new clients to create
-        type: object
-        properties:
-          clients:
-            description: The client codes array
-            type: array
-            items:
-              description: The client code
-              type: string
-            readOnly: true
-        example:
-          clients:
-            - 'some-client'
-            - 'other-client'
+    Clients:
+      description: The new clients to create
+      type: object
+      properties:
+        clients:
+          description: The client codes array
+          type: array
+          items:
+            description: The client code
+            type: string
+          readOnly: true
+      example:
+        clients:
+          - 'some-client'
+          - 'other-client'

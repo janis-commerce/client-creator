@@ -1,28 +1,28 @@
 paths:
-    /listener/client/created:
-      post:
-        x-janis-namespace: client
-        x-janis-method: created-listener
-        tags:
-          - Client
-        summary: Client created event listener
-        security:
-          - ApiKey: []
-            ApiSecret: []
-        description: Client created event listener
-        operationId: clientCreatedListener
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/listenerEvent'
-        responses:
-          '200':
-            $ref: '#/components/responses/GenericSuccess'
-          '400':
-            $ref: '#/components/responses/BadRequest'
-          '401':
-            $ref: '#/components/responses/Unauthorized'
-          '500':
-            $ref: '#/components/responses/InternalError'
+  /listener/id/client/created:
+    post:
+      x-janis-namespace: id-client
+      x-janis-method: created-listener
+      tags:
+        - Client
+      summary: Client created event listener
+      security:
+        - ApiKey: []
+          ApiSecret: []
+      description: Client created event listener
+      operationId: clientCreatedListener
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/listenerEvent'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenericSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
