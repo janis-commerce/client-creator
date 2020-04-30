@@ -103,7 +103,7 @@ Finally, create or update `./.nycrc` to avoid coverage leaks:
   "exclude": [
     //... your files
     "src/event-listeners/id/client/created.js",
-    "src/models/client.js,
+    "src/models/client.js",
     "src/api/client/post.js"
   ]
 }
