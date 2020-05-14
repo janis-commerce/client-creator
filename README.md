@@ -110,3 +110,118 @@ Finally, create or update `./.nycrc` to avoid coverage leaks:
 ```
 
 :warning: If exists any customization of the files, do not add the file to the .nyrcr and add the corresponding tests.
+
+### Getters
+Both `APICreate` and `ListenerCreated` have a getter for customize the client creation settings.
+
+#### `databaseSettingsSource` (*`instance getter`*): Is the database config source key that will be getted from your MS database config. Default: `clientModel.databaseKey`.
+
+##### Example
+
+##### .janiscommercerc
+```js
+{
+  "database":{
+      "newClients": {
+          type: 'mongodb',
+          host: 'core-host'
+          // ...
+      },
+      otherDb: {
+          host: 'http://clients-host:8983',
+          type: 'solr'
+      }
+  }
+}
+```
+
+##### `./[MS_PATH]/api/client/post.js`
+```js
+'use strict';
+const { APICreate } = require('@janiscommerce/client-creator')
+
+class ClientCreateAPI extends APICreate {
+
+  get databaseSettingsSource() {
+    return 'otherDb';
+  }
+}
+
+module.exports = ClientCreateAPI;
+```
+
+##### `./[MS_PATH]/event-listeners/id/client/created.js`
+```js
+'use strict';
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerCreated } = require('@janiscommerce/client-creator');
+
+class ClientCreateListener extends ListenerCreated {
+
+  get databaseSettingsSource() {
+    return 'otherDb';
+  }
+}
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ClientCreateListener, ...args);
+```
+
+### Hooks
+Both `APICreate` and `ListenerCreated` have a hook for post processing the client or clients created data.
+
+#### APICreate
+
+#### `postSaveHook(clientCodes, databaseSettings)`
+Receives the clientCodes from the API and the databaseSettings for the created clients.
+
+Parameters:
+- clientCodes `string Array`: The client created codes .
+- databaseSettings `Object`: The database settings of the created clients.
+
+##### Example
+```js
+'use strict';
+const { APICreate } = require('@janiscommerce/client-creator')
+
+class ClientCreateAPI extends APICreate {
+
+  async postSaveHook(clientCodes, databaseSettings) {
+
+      await myPostSaveMethod(clientCodes, databaseSettings);
+
+      clientCodes.forEach(code => {
+          console.log(`Saved client ${code} with host: ${databaseSettings.host}`);
+      })
+    }
+}
+
+module.exports = ClientCreateAPI;
+```
+
+#### ListenerCreated
+
+#### `postSaveHook(clientCode, databaseSettings)`
+Receives the clientCode from the event and the databaseSettings for the created client.
+
+Parameters:
+- clientCode `string`: The client created code .
+- databaseSettings `Object`: The database settings of the created client.
+
+##### Example
+```js
+'use strict';
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerCreated } = require('@janiscommerce/client-creator');
+
+class ClientCreateListener extends ListenerCreated {
+
+  async postSaveHook(clientCode, databaseSettings) {
+
+    await myPostSaveMethod(clientCode, databaseSettings);
+
+    console.log(`Saved client ${code} with host: ${databaseSettings.host}`);
+  }
+}
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ClientCreateListener, ...args);
+```

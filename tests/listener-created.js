@@ -25,6 +25,9 @@ describe('Client Created Listener', async () => {
 	const fakeSettings = {
 		newClients: {
 			host: 'some-database-host'
+		},
+		otherDb: {
+			host: 'other-database-host'
 		}
 	};
 
@@ -35,6 +38,13 @@ describe('Client Created Listener', async () => {
 			port: 27017,
 			user: 'some-user',
 			password: 'some-password'
+		},
+		otherDb: {
+			host: 'other-database-host',
+			protocol: 'other-protocol://',
+			port: 27017,
+			user: 'other-user',
+			password: 'other-password'
 		}
 	};
 
@@ -43,6 +53,11 @@ describe('Client Created Listener', async () => {
 		status: ClientModel.statuses.active,
 		dbHost: fakeSettings.newClients.host,
 		dbDatabase: 'janis-some-client'
+	};
+
+	const expectedOtherClientObject = {
+		...expectedClientObject,
+		dbHost: fakeSettings.otherDb.host
 	};
 
 	const expectedFullClientObject = {
@@ -70,9 +85,15 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
-				sandbox.stub(ClientModel.prototype, 'save').throws();
-				sandbox.stub(Settings, 'get').returns(fakeSettings);
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode').resolves();
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.rejects();
+
+				sandbox.stub(Settings, 'get')
+					.returns(fakeSettings);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.resolves();
 			},
 			after: sandbox => {
 
@@ -89,9 +110,15 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
-				sandbox.stub(ClientModel.prototype, 'save').resolves();
-				sandbox.stub(Settings, 'get').returns(fakeSettings);
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode').throws();
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.resolves();
+
+				sandbox.stub(Settings, 'get')
+					.returns(fakeSettings);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.rejects();
 			},
 			after: sandbox => {
 
@@ -108,14 +135,23 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
-				sandbox.stub(ClientModel.prototype, 'save').resolves('5dea9fc691240d00084083f9');
-				sandbox.stub(Settings, 'get').returns(fakeSettings);
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode').resolves();
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.resolves('5dea9fc691240d00084083f9');
+
+				sandbox.stub(Settings, 'get')
+					.returns(fakeSettings);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.resolves();
+
+				sandbox.spy(ClientCreatedListener.prototype, 'postSaveHook');
 			},
 			after: sandbox => {
 
 				sandbox.assert.calledOnceWithExactly(ClientModel.prototype.save, expectedClientObject);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, 'some-client');
+				sandbox.assert.calledOnceWithExactly(ClientCreatedListener.prototype.postSaveHook, 'some-client', fakeSettings.newClients);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 200
@@ -127,14 +163,54 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
-				sandbox.stub(ClientModel.prototype, 'save').resolves('5dea9fc691240d00084083f9');
-				sandbox.stub(Settings, 'get').returns(fakeFullSettings);
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode').resolves();
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.resolves('5dea9fc691240d00084083f9');
+
+				sandbox.stub(Settings, 'get')
+					.returns(fakeFullSettings);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.resolves();
+
+				sandbox.spy(ClientCreatedListener.prototype, 'postSaveHook');
 			},
 			after: sandbox => {
 
 				sandbox.assert.calledOnceWithExactly(ClientModel.prototype.save, expectedFullClientObject);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, 'some-client');
+				sandbox.assert.calledOnceWithExactly(ClientCreatedListener.prototype.postSaveHook, 'some-client', fakeFullSettings.newClients);
+				mockRequire.stop(fakeClientPath);
+			},
+			responseCode: 200
+		},
+		{
+			description: 'Should return 200 when client model saves the new client sucessfully using a different db config',
+			event: validEvent,
+			session: true,
+			before: sandbox => {
+
+				mockRequire(fakeClientPath, ClientModel);
+
+				sandbox.stub(ClientCreatedListener.prototype, 'databaseSettingsSource')
+					.get(() => 'otherDb');
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.resolves('5dea9fc691240d00084083f9');
+
+				sandbox.stub(Settings, 'get')
+					.returns(fakeSettings);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.resolves();
+
+				sandbox.spy(ClientCreatedListener.prototype, 'postSaveHook');
+			},
+			after: sandbox => {
+
+				sandbox.assert.calledOnceWithExactly(ClientModel.prototype.save, expectedOtherClientObject);
+				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, 'some-client');
+				sandbox.assert.calledOnceWithExactly(ClientCreatedListener.prototype.postSaveHook, 'some-client', fakeSettings.otherDb);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 200
