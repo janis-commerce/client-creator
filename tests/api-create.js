@@ -13,52 +13,39 @@ const fakeWrongClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 
 
 describe('APIs', () => {
 
-	describe('Client Create API', () => {
+	describe.only('Client Create API', () => {
 
 		const fakeSettings = {
-			newClients: {
-				host: 'some-database-host'
-			},
-			otherDb: {
-				host: 'other-database-host'
-			}
-		};
 
-		const fakeFullSettings = {
-			newClients: {
-				host: 'some-database-host',
-				protocol: 'some-protocol://',
-				port: 27017,
-				user: 'some-user',
-				password: 'some-password'
+			database: {
+
+				core: {
+					host: 'core-database-host',
+					protocol: 'core-protocol://',
+					port: 27017,
+					user: 'core-user',
+					password: 'core-password'
+				},
+				newClients: {
+					host: 'some-database-host',
+					protocol: 'some-protocol://',
+					port: 27017,
+					user: 'some-user',
+					password: 'some-password'
+				}
 			},
-			otherDb: {
-				host: 'other-database-host',
-				protocol: 'other-protocol://',
-				port: 27017,
-				user: 'other-user',
-				password: 'other-password'
+			clients: {
+				databaseKey: 'newClients'
 			}
 		};
 
 		const expectedClientObject = {
 			code: 'some-client',
 			status: ClientModel.statuses.active,
-			dbHost: fakeSettings.newClients.host,
-			dbDatabase: 'janis-some-client'
-		};
-
-		const expectedOtherClientObject = {
-			...expectedClientObject,
-			dbHost: fakeSettings.otherDb.host
-		};
-
-		const expectedFullClientObject = {
-			...expectedClientObject,
-			dbProtocol: fakeFullSettings.newClients.protocol,
-			dbPort: fakeFullSettings.newClients.port,
-			dbUser: fakeFullSettings.newClients.user,
-			dbPassword: fakeFullSettings.newClients.password
+			dbProtocol: fakeSettings.database.newClients.protocol,
+			dbPort: fakeSettings.database.newClients.port,
+			dbUser: fakeSettings.database.newClients.user,
+			dbPassword: fakeSettings.database.newClients.password
 		};
 
 		APITest(ClientCreateAPI, '/api/client', [
@@ -82,7 +69,7 @@ describe('APIs', () => {
 					mockRequire(fakeClientPath, ClientModel);
 
 					sandbox.stub(Settings, 'get')
-						.returns(fakeSettings);
+						.callsFake(setting => fakeSettings[setting]);
 
 					sandbox.stub(ClientModel.prototype, 'multiSave')
 						.resolves(true);
@@ -106,7 +93,7 @@ describe('APIs', () => {
 					sandbox.assert.calledOnceWithExactly(ClientCreateAPI.prototype.postSaveHook, ['some-client', 'other-client'], fakeSettings.newClients);
 					mockRequire.stop(fakeClientPath);
 				}
-			},
+			}/* ,
 			{
 				description: 'Should save all the received new clients to clients DB with full database config',
 				session: true,
@@ -150,53 +137,6 @@ describe('APIs', () => {
 					sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientDatabases);
 
 					sandbox.assert.calledOnceWithExactly(ClientCreateAPI.prototype.postSaveHook, ['some-client', 'other-client'], fakeFullSettings.newClients);
-					mockRequire.stop(fakeClientPath);
-				}
-			},
-			{
-				description: 'Should save all the received new clients to clients DB using a different db config',
-				session: true,
-				request: {
-					data: {
-						clients: [
-							'some-client',
-							'other-client'
-						]
-					}
-				},
-				response: {
-					code: 200
-				},
-				before: sandbox => {
-
-					mockRequire(fakeClientPath, ClientModel);
-
-					sandbox.stub(ClientCreateAPI.prototype, 'databaseSettingsSource')
-						.get(() => 'otherDb');
-
-					sandbox.stub(Settings, 'get')
-						.returns(fakeSettings);
-
-					sandbox.stub(ClientModel.prototype, 'multiSave')
-						.resolves(true);
-
-					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
-						.resolves();
-
-					sandbox.spy(ClientCreateAPI.prototype, 'postSaveHook');
-				},
-				after: (res, sandbox) => {
-
-					sandbox.assert.calledOnceWithExactly(ClientModel.prototype.multiSave, [
-						expectedOtherClientObject,
-						{
-							...expectedOtherClientObject,
-							code: 'other-client',
-							dbDatabase: 'janis-other-client'
-						}
-					]);
-
-					sandbox.assert.calledOnceWithExactly(ClientCreateAPI.prototype.postSaveHook, ['some-client', 'other-client'], fakeSettings.otherDb);
 					mockRequire.stop(fakeClientPath);
 				}
 			},
@@ -323,7 +263,7 @@ describe('APIs', () => {
 					sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientDatabases);
 					mockRequire.stop(fakeClientPath);
 				}
-			}
+			}*/
 		]);
 	});
 });
