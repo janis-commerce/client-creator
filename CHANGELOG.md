@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.1.0] - 2020-05-19
+### Removed
+- `package-lock.json` file
+
 ## [1.0.4] - 2020-05-04
 ### Fixed
 - Fix client-functions module client path
