@@ -5,7 +5,8 @@
 
 
 ## Introduction
-This package includes all the generic functionality of the creation of a client at the services. It main purpose is to avoid code repetition. 
+This package includes all the generic functionality of the creation of a client at the services. It main purpose is to avoid code repetition.
+
 ## Installation
 ```sh
 npm install @janiscommerce/client-creator
@@ -13,6 +14,31 @@ npm install @janiscommerce/client-creator
 ## Configuration
 
 After installing this package you should create or update the following files:
+
+### Service settings (.janiscommercerc)
+You should configure the database config in your service, in order to get the correct DB config for new clients:
+
+#### .janiscommercerc.json
+```js
+{
+  "database": {
+    "core": { // DB config where save new clients
+      "type": "mongodb",
+      "host": "core-host"
+      // ...
+    },
+    "newClients": { // DB config that the clients will use
+      "type": "mongodb",
+      "host": "clients-host"
+      // ...
+    }
+  },
+  "clients": {
+    "databaseKey": "newClients", // The new clients config databaseKey,
+    "table": "clients" // The clients table where create the clients ("clients" by default)
+  }
+}
+```
 
 ### ClientModel
 At `./[MS_PATH]/models/client.js`
@@ -72,7 +98,6 @@ const { helper } = require('sls-helper'); // eslint-disable-line
 const functions = require('./serverless/functions.json');
 const { clientFunctions } =  require('@janiscommerce/client-creator');
 
-
 module.exports = helper({
 	hooks: [
 		// other hooks
@@ -110,61 +135,6 @@ Finally, create or update `./.nycrc` to avoid coverage leaks:
 ```
 
 :warning: If exists any customization of the files, do not add the file to the .nyrcr and add the corresponding tests.
-
-### Getters
-Both `APICreate` and `ListenerCreated` have a getter for customize the client creation settings.
-
-#### `databaseSettingsSource` (*`instance getter`*): Is the database config source key that will be getted from your MS database config. Default: `clientModel.databaseKey`.
-
-##### Example
-
-##### .janiscommercerc
-```js
-{
-  "database":{
-      "newClients": {
-          type: 'mongodb',
-          host: 'core-host'
-          // ...
-      },
-      otherDb: {
-          host: 'http://clients-host:8983',
-          type: 'solr'
-      }
-  }
-}
-```
-
-##### `./[MS_PATH]/api/client/post.js`
-```js
-'use strict';
-const { APICreate } = require('@janiscommerce/client-creator')
-
-class ClientCreateAPI extends APICreate {
-
-  get databaseSettingsSource() {
-    return 'otherDb';
-  }
-}
-
-module.exports = ClientCreateAPI;
-```
-
-##### `./[MS_PATH]/event-listeners/id/client/created.js`
-```js
-'use strict';
-const { ServerlessHandler } = require('@janiscommerce/event-listener');
-const { ListenerCreated } = require('@janiscommerce/client-creator');
-
-class ClientCreateListener extends ListenerCreated {
-
-  get databaseSettingsSource() {
-    return 'otherDb';
-  }
-}
-
-module.exports.handler = (...args) => ServerlessHandler.handle(ClientCreateListener, ...args);
-```
 
 ### Hooks
 Both `APICreate` and `ListenerCreated` have a hook for post processing the client or clients created data.
