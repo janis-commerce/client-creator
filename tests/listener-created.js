@@ -23,34 +23,60 @@ describe('Client Created Listener', async () => {
 	};
 
 	const fakeSettings = {
-		newClients: {
-			host: 'some-database-host'
+
+		database: {
+
+			core: {
+				host: 'core-database-host',
+				protocol: 'core-protocol://',
+				port: 27017,
+				user: 'core-user',
+				password: 'core-password'
+			},
+			newClients: {
+				host: 'some-database-host',
+				protocol: 'some-protocol://',
+				port: 27017,
+				user: 'some-user',
+				password: 'some-password'
+			}
+		},
+		clients: {
+			databaseKey: 'newClients'
 		}
 	};
 
-	const fakeFullSettings = {
-		newClients: {
-			host: 'some-database-host',
-			protocol: 'some-protocol://',
-			port: 27017,
-			user: 'some-user',
-			password: 'some-password'
+	const fakeBasicSettings = {
+
+		...fakeSettings,
+
+		database: {
+
+			core: {
+				host: fakeSettings.database.core.host
+			},
+			newClients: {
+				host: fakeSettings.database.newClients.host
+			}
 		}
 	};
 
 	const expectedClientObject = {
 		code: 'some-client',
 		status: ClientModel.statuses.active,
-		dbHost: fakeSettings.newClients.host,
+		dbHost: fakeSettings.database.newClients.host,
+		dbProtocol: fakeSettings.database.newClients.protocol,
+		dbPort: fakeSettings.database.newClients.port,
+		dbUser: fakeSettings.database.newClients.user,
+		dbPassword: fakeSettings.database.newClients.password,
 		dbDatabase: 'janis-some-client'
 	};
 
-	const expectedFullClientObject = {
-		...expectedClientObject,
-		dbProtocol: fakeFullSettings.newClients.protocol,
-		dbPort: fakeFullSettings.newClients.port,
-		dbUser: fakeFullSettings.newClients.user,
-		dbPassword: fakeFullSettings.newClients.password
+	const expectedBasicClientObject = {
+		code: expectedClientObject.code,
+		status: expectedClientObject.status,
+		dbHost: expectedClientObject.dbHost,
+		dbDatabase: expectedClientObject.dbDatabase
 	};
 
 	await EventListenerTest(handler, [
@@ -70,9 +96,15 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
-				sandbox.stub(ClientModel.prototype, 'save').throws();
-				sandbox.stub(Settings, 'get').returns(fakeSettings);
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode').resolves();
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.rejects();
+
+				sandbox.stub(Settings, 'get')
+					.callsFake(setting => fakeSettings[setting]);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.resolves();
 			},
 			after: sandbox => {
 
@@ -89,9 +121,15 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
-				sandbox.stub(ClientModel.prototype, 'save').resolves();
-				sandbox.stub(Settings, 'get').returns(fakeSettings);
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode').throws();
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.resolves();
+
+				sandbox.stub(Settings, 'get')
+					.callsFake(setting => fakeSettings[setting]);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.rejects();
 			},
 			after: sandbox => {
 
@@ -108,14 +146,23 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
-				sandbox.stub(ClientModel.prototype, 'save').resolves('5dea9fc691240d00084083f9');
-				sandbox.stub(Settings, 'get').returns(fakeSettings);
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode').resolves();
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.resolves('5dea9fc691240d00084083f9');
+
+				sandbox.stub(Settings, 'get')
+					.callsFake(setting => fakeBasicSettings[setting]);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.resolves();
+
+				sandbox.spy(ClientCreatedListener.prototype, 'postSaveHook');
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ClientModel.prototype.save, expectedClientObject);
+				sandbox.assert.calledOnceWithExactly(ClientModel.prototype.save, expectedBasicClientObject);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, 'some-client');
+				sandbox.assert.calledOnceWithExactly(ClientCreatedListener.prototype.postSaveHook, 'some-client', fakeBasicSettings.database.newClients);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 200
@@ -127,14 +174,23 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
-				sandbox.stub(ClientModel.prototype, 'save').resolves('5dea9fc691240d00084083f9');
-				sandbox.stub(Settings, 'get').returns(fakeFullSettings);
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode').resolves();
+
+				sandbox.stub(ClientModel.prototype, 'save')
+					.resolves('5dea9fc691240d00084083f9');
+
+				sandbox.stub(Settings, 'get')
+					.callsFake(setting => fakeSettings[setting]);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.resolves();
+
+				sandbox.spy(ClientCreatedListener.prototype, 'postSaveHook');
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ClientModel.prototype.save, expectedFullClientObject);
+				sandbox.assert.calledOnceWithExactly(ClientModel.prototype.save, expectedClientObject);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, 'some-client');
+				sandbox.assert.calledOnceWithExactly(ClientCreatedListener.prototype.postSaveHook, 'some-client', fakeSettings.database.newClients);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 200
