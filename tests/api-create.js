@@ -35,7 +35,7 @@ describe('APIs', () => {
 				}
 			},
 			clients: {
-				databaseKey: 'newClients'
+				newClientsDatabaseKey: 'newClients'
 			}
 		};
 

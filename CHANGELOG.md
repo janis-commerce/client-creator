@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - `databaseSettings` parameter for `postSaveHook()` method
+- `newClientsDatabaseKey` setting for new clients database config
 
 ### Changed
 - `Client` Model now set the new clients databaseKey from config

@@ -34,7 +34,8 @@ You should configure the database config in your service, in order to get the co
     }
   },
   "clients": {
-    "databaseKey": "newClients", // The new clients config databaseKey,
+    "newClientsDatabaseKey": "newClients", // The new clients config databaseKey ("newClients" by default)
+    "databaseKey": "newClients", // The databaseKey where store the new clients ("core" by default)
     "table": "clients" // The clients table where create the clients ("clients" by default)
   }
 }

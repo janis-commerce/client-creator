@@ -37,6 +37,28 @@ describe('ClientModel', () => {
 			assert.deepStrictEqual(clientModel.databaseKey, 'some-databaseKey');
 		});
 
+		it('should return the newClients as databaseKey for new clients when is not set in settings', () => {
+
+			sandbox.stub(Settings, 'get')
+				.returns({});
+
+			const clientModel = new ClientModel();
+
+			assert.deepStrictEqual(clientModel.newClientsDatabaseKey, 'newClients');
+		});
+
+		it('should return the new clients databaseKey setted in settings', () => {
+
+			sandbox.stub(Settings, 'get')
+				.returns({
+					newClientsDatabaseKey: 'some-databaseKey'
+				});
+
+			const clientModel = new ClientModel();
+
+			assert.deepStrictEqual(clientModel.newClientsDatabaseKey, 'some-databaseKey');
+		});
+
 		it('should return clients as table name when is not set in settings', () => {
 
 			sandbox.stub(Settings, 'get')

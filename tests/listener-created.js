@@ -42,7 +42,7 @@ describe('Client Created Listener', async () => {
 			}
 		},
 		clients: {
-			databaseKey: 'newClients'
+			newClientsDatabaseKey: 'newClients'
 		}
 	};
 
