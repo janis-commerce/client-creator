@@ -66,7 +66,6 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 500 when client model fails to save the new client',
 			event: validEvent,
-			session: true,
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
@@ -91,7 +90,6 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 500 when the index creator fails',
 			event: validEvent,
-			session: true,
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
@@ -116,7 +114,6 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 200 when client model saves the new client sucessfully',
 			event: validEvent,
-			session: true,
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);

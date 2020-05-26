@@ -50,7 +50,6 @@ describe('APIs', () => {
 
 			{
 				description: 'Should save all the received new clients to clients DB',
-				session: true,
 				request: {
 					data: {
 						clients: [
@@ -99,7 +98,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 500 when the client model multiSave fails',
-				session: true,
 				request: {
 					data: {
 						clients: ['some-client']
@@ -132,7 +130,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 500 when the index creator fails',
-				session: true,
 				request: {
 					data: {
 						clients: ['some-client']
@@ -166,7 +163,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 400 when the received request data is invalid',
-				session: true,
 				request: {
 					data: ['something']
 				},
@@ -176,7 +172,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 400 when the received clients are invalid',
-				session: true,
 				request: {
 					data: {
 						clients: { some: 'object' }
@@ -188,7 +183,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 400 when the client model is not in the corresponding path',
-				session: true,
 				request: {
 					data: {
 						clients: [
