@@ -39,93 +39,17 @@ describe('APIs', () => {
 			}
 		};
 
-		const fakeBasicSettings = {
-
-			...fakeSettings,
-
-			database: {
-
-				core: {
-					host: fakeSettings.database.core.host
-				},
-				newClients: {
-					host: fakeSettings.database.newClients.host
-				}
-			}
-		};
-
 		const expectedClientObject = {
 			code: 'some-client',
 			status: ClientModel.statuses.active,
-			dbHost: fakeSettings.database.newClients.host,
-			dbProtocol: fakeSettings.database.newClients.protocol,
-			dbPort: fakeSettings.database.newClients.port,
-			dbUser: fakeSettings.database.newClients.user,
-			dbPassword: fakeSettings.database.newClients.password,
+			...fakeSettings.database.newClients,
 			dbDatabase: 'janis-some-client'
-		};
-
-		const expectedBasicClientObject = {
-			code: expectedClientObject.code,
-			status: expectedClientObject.status,
-			dbHost: expectedClientObject.dbHost,
-			dbDatabase: expectedClientObject.dbDatabase
 		};
 
 		APITest(ClientCreateAPI, '/api/client', [
 
 			{
 				description: 'Should save all the received new clients to clients DB',
-				session: true,
-				request: {
-					data: {
-						clients: [
-							'some-client',
-							'other-client'
-						]
-					}
-				},
-				response: {
-					code: 200
-				},
-				before: sandbox => {
-
-					mockRequire(fakeClientPath, ClientModel);
-
-					sandbox.stub(Settings, 'get')
-						.callsFake(setting => fakeBasicSettings[setting]);
-
-					sandbox.stub(ClientModel.prototype, 'multiSave')
-						.resolves(true);
-
-					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
-						.resolves();
-
-					sandbox.spy(ClientCreateAPI.prototype, 'postSaveHook');
-				},
-				after: (res, sandbox) => {
-
-					sandbox.assert.calledOnceWithExactly(ClientModel.prototype.multiSave, [
-						expectedBasicClientObject,
-						{
-							...expectedBasicClientObject,
-							code: 'other-client',
-							dbDatabase: 'janis-other-client'
-						}
-					]);
-
-					sandbox.assert.calledOnceWithExactly(
-						ClientCreateAPI.prototype.postSaveHook,
-						['some-client', 'other-client'],
-						fakeBasicSettings.database.newClients
-					);
-
-					mockRequire.stop(fakeClientPath);
-				}
-			},
-			{
-				description: 'Should save all the received new clients to clients DB with full database config',
-				session: true,
 				request: {
 					data: {
 						clients: [
@@ -163,13 +87,17 @@ describe('APIs', () => {
 						}
 					]);
 
-					sandbox.assert.calledOnceWithExactly(ClientCreateAPI.prototype.postSaveHook, ['some-client', 'other-client'], fakeSettings.database.newClients);
+					sandbox.assert.calledOnceWithExactly(
+						ClientCreateAPI.prototype.postSaveHook,
+						['some-client', 'other-client'],
+						fakeSettings.database.newClients
+					);
+
 					mockRequire.stop(fakeClientPath);
 				}
 			},
 			{
 				description: 'Should return 500 when the client model multiSave fails',
-				session: true,
 				request: {
 					data: {
 						clients: ['some-client']
@@ -202,7 +130,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 500 when the index creator fails',
-				session: true,
 				request: {
 					data: {
 						clients: ['some-client']
@@ -236,7 +163,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 400 when the received request data is invalid',
-				session: true,
 				request: {
 					data: ['something']
 				},
@@ -246,7 +172,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 400 when the received clients are invalid',
-				session: true,
 				request: {
 					data: {
 						clients: { some: 'object' }
@@ -258,7 +183,6 @@ describe('APIs', () => {
 			},
 			{
 				description: 'Should return 400 when the client model is not in the corresponding path',
-				session: true,
 				request: {
 					data: {
 						clients: [

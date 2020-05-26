@@ -46,37 +46,11 @@ describe('Client Created Listener', async () => {
 		}
 	};
 
-	const fakeBasicSettings = {
-
-		...fakeSettings,
-
-		database: {
-
-			core: {
-				host: fakeSettings.database.core.host
-			},
-			newClients: {
-				host: fakeSettings.database.newClients.host
-			}
-		}
-	};
-
 	const expectedClientObject = {
 		code: 'some-client',
 		status: ClientModel.statuses.active,
-		dbHost: fakeSettings.database.newClients.host,
-		dbProtocol: fakeSettings.database.newClients.protocol,
-		dbPort: fakeSettings.database.newClients.port,
-		dbUser: fakeSettings.database.newClients.user,
-		dbPassword: fakeSettings.database.newClients.password,
+		...fakeSettings.database.newClients,
 		dbDatabase: 'janis-some-client'
-	};
-
-	const expectedBasicClientObject = {
-		code: expectedClientObject.code,
-		status: expectedClientObject.status,
-		dbHost: expectedClientObject.dbHost,
-		dbDatabase: expectedClientObject.dbDatabase
 	};
 
 	await EventListenerTest(handler, [
@@ -92,7 +66,6 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 500 when client model fails to save the new client',
 			event: validEvent,
-			session: true,
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
@@ -117,7 +90,6 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 500 when the index creator fails',
 			event: validEvent,
-			session: true,
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
@@ -142,35 +114,6 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 200 when client model saves the new client sucessfully',
 			event: validEvent,
-			session: true,
-			before: sandbox => {
-
-				mockRequire(fakeClientPath, ClientModel);
-
-				sandbox.stub(ClientModel.prototype, 'save')
-					.resolves('5dea9fc691240d00084083f9');
-
-				sandbox.stub(Settings, 'get')
-					.callsFake(setting => fakeBasicSettings[setting]);
-
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
-					.resolves();
-
-				sandbox.spy(ClientCreatedListener.prototype, 'postSaveHook');
-			},
-			after: sandbox => {
-
-				sandbox.assert.calledOnceWithExactly(ClientModel.prototype.save, expectedBasicClientObject);
-				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, 'some-client');
-				sandbox.assert.calledOnceWithExactly(ClientCreatedListener.prototype.postSaveHook, 'some-client', fakeBasicSettings.database.newClients);
-				mockRequire.stop(fakeClientPath);
-			},
-			responseCode: 200
-		},
-		{
-			description: 'Should return 200 when client model saves the new client with full database config sucessfully',
-			event: validEvent,
-			session: true,
 			before: sandbox => {
 
 				mockRequire(fakeClientPath, ClientModel);
