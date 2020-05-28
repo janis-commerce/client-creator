@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.0.0] - 2020-05-28
+### Changed
+- Settings in `janiscommercerc.json` now are no longer mapped, the newClients settings will be setted in the new client document
+- Setting `database` renamed from `dbDatabase`
+
 ## [1.3.0] - 2020-05-26
 ### Removed
 - `session` in client create API and Listener

@@ -25,7 +25,6 @@ describe('Client Created Listener', async () => {
 	const fakeSettings = {
 
 		database: {
-
 			core: {
 				host: 'core-database-host',
 				protocol: 'core-protocol://',
@@ -50,7 +49,7 @@ describe('Client Created Listener', async () => {
 		code: 'some-client',
 		status: ClientModel.statuses.active,
 		...fakeSettings.database.newClients,
-		dbDatabase: 'janis-some-client'
+		database: 'janis-some-client'
 	};
 
 	await EventListenerTest(handler, [

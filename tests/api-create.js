@@ -18,7 +18,6 @@ describe('APIs', () => {
 		const fakeSettings = {
 
 			database: {
-
 				core: {
 					host: 'core-database-host',
 					protocol: 'core-protocol://',
@@ -43,7 +42,7 @@ describe('APIs', () => {
 			code: 'some-client',
 			status: ClientModel.statuses.active,
 			...fakeSettings.database.newClients,
-			dbDatabase: 'janis-some-client'
+			database: 'janis-some-client'
 		};
 
 		APITest(ClientCreateAPI, '/api/client', [
@@ -83,7 +82,7 @@ describe('APIs', () => {
 						{
 							...expectedClientObject,
 							code: 'other-client',
-							dbDatabase: 'janis-other-client'
+							database: 'janis-other-client'
 						}
 					]);
 
