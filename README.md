@@ -29,7 +29,8 @@ You should configure the database config in your service, in order to get the co
     },
     "newClients": { // DB config that the clients will use
       "type": "mongodb",
-      "host": "clients-host"
+      "host": "clients-host",
+      "database": "janis-{{code}}" // necesary to add dinamic database names
       // ...
     }
   },
