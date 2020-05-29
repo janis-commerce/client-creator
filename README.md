@@ -30,24 +30,29 @@ You should configure the database config in your service, in order to get the co
     "newClients": { // DB config that the clients will use
       "type": "mongodb",
       "host": "clients-host",
-      "database": "janis-{{code}}" // necesary to add dinamic database names
+      "database": "janis-{{code}}" // necesary to add dinamic database name. Since 3.0.0
       // ...
     }
   },
   "clients": {
     "newClientsDatabaseKey": "newClients", // The new clients config databaseKey ("newClients" by default)
-    "databaseKey": "newClients", // The databaseKey where store the new clients ("core" by default)
+    "databaseKey": "core", // The databaseKey where store the new clients ("core" by default)
     "table": "clients" // The clients table where create the clients ("clients" by default)
   }
 }
 ```
+
+_(since 3.0.0)_
+
+**The database name is required in the "newClients" settings is required!!!**
+This field should be the same in the database.newClients and clients.fields.write[database] and clients.fields.read[database] (if used)
 
 ### ClientModel
 At `./[MS_PATH]/models/client.js`
 
 ```js
 'use strict';
-const { ModelClient } = require('@janiscommerce/client-creator')
+const { ModelClient } = require('@janiscommerce/client-creator');
 
 module.exports = ModelClient;
 ```
@@ -57,7 +62,7 @@ At `./[MS_PATH]/api/client/post.js`
 
 ```js
 'use strict';
-const { APICreate } = require('@janiscommerce/client-creator')
+const { APICreate } = require('@janiscommerce/client-creator');
 
 module.exports = APICreate;
 ```
@@ -97,14 +102,14 @@ At `./serverless.js`
 'use strict';
 
 const { helper } = require('sls-helper'); // eslint-disable-line
+const { clientFunctions } = require('@janiscommerce/client-creator');
 const functions = require('./serverless/functions.json');
-const { clientFunctions } =  require('@janiscommerce/client-creator');
 
 module.exports = helper({
 	hooks: [
 		// other hooks
-        ...functions,
-        ...clientFunctions
+		...functions,
+		...clientFunctions
 	]
 });
 ```
@@ -153,7 +158,7 @@ Parameters:
 ##### Example
 ```js
 'use strict';
-const { APICreate } = require('@janiscommerce/client-creator')
+const { APICreate } = require('@janiscommerce/client-creator');
 
 class ClientCreateAPI extends APICreate {
 
