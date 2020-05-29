@@ -30,7 +30,8 @@ describe('APIs', () => {
 					protocol: 'some-protocol://',
 					port: 27017,
 					user: 'some-user',
-					password: 'some-password'
+					password: 'some-password',
+					database: 'janis-{{code}}'
 				}
 			},
 			clients: {
@@ -46,7 +47,6 @@ describe('APIs', () => {
 		};
 
 		APITest(ClientCreateAPI, '/api/client', [
-
 			{
 				description: 'Should save all the received new clients to clients DB',
 				request: {
@@ -90,6 +90,69 @@ describe('APIs', () => {
 						ClientCreateAPI.prototype.postSaveHook,
 						['some-client', 'other-client'],
 						fakeSettings.database.newClients
+					);
+
+					mockRequire.stop(fakeClientPath);
+				}
+			},
+			{
+				description: 'Should save all the received new clients without database settings to clients DB without newClients Settings',
+				request: {
+					data: {
+						clients: [
+							'some-client',
+							'other-client'
+						]
+					}
+				},
+				response: {
+					code: 200
+				},
+				before: sandbox => {
+
+					const fakeSettings2 = {
+
+						database: {
+							core: {
+								host: 'core-database-host',
+								protocol: 'core-protocol://',
+								port: 27017,
+								user: 'core-user',
+								password: 'core-password'
+							}
+						}
+					};
+
+					mockRequire(fakeClientPath, ClientModel);
+
+					sandbox.stub(Settings, 'get')
+						.callsFake(setting => fakeSettings2[setting]);
+
+					sandbox.stub(ClientModel.prototype, 'multiSave')
+						.resolves(true);
+
+					sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
+						.resolves();
+
+					sandbox.spy(ClientCreateAPI.prototype, 'postSaveHook');
+				},
+				after: (res, sandbox) => {
+
+					sandbox.assert.calledOnceWithExactly(ClientModel.prototype.multiSave, [
+						{
+							code: 'some-client',
+							status: ClientModel.statuses.active
+						},
+						{
+							code: 'other-client',
+							status: ClientModel.statuses.active
+						}
+					]);
+
+					sandbox.assert.calledOnceWithExactly(
+						ClientCreateAPI.prototype.postSaveHook,
+						['some-client', 'other-client'],
+						undefined
 					);
 
 					mockRequire.stop(fakeClientPath);

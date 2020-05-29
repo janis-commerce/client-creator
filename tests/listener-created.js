@@ -37,7 +37,8 @@ describe('Client Created Listener', async () => {
 				protocol: 'some-protocol://',
 				port: 27017,
 				user: 'some-user',
-				password: 'some-password'
+				password: 'some-password',
+				database: 'janis-{{code}}'
 			}
 		},
 		clients: {
