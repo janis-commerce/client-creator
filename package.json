@@ -1,7 +1,7 @@
 {
   "name": "@janiscommerce/client-creator",
-  "version": "3.0.0",
-  "description": "A packge that wraps all the client creation in a JANIS Service",
+  "version": "3.0.1",
+  "description": "A packge that wraps all the client creation in a Janis Service",
   "main": "index.js",
   "scripts": {
     "test": "export TEST_ENV=true; mocha --exit -R nyan --recursive tests/",
@@ -20,11 +20,11 @@
   "devDependencies": {
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.17.3",
-    "eslint": "^5.16.0",
+    "eslint": "^7.2.0",
     "husky": "^2.4.1",
-    "mocha": "^5.2.0",
+    "mocha": "^8.0.1",
     "mock-require": "^3.0.3",
-    "nyc": "^13.1.0",
+    "nyc": "^15.1.0",
     "sinon": "^9.0.2"
   },
   "files": [
@@ -34,10 +34,10 @@
     "test": "tests"
   },
   "dependencies": {
-    "@janiscommerce/api-test": "^2.3.1",
-    "@janiscommerce/api": "^4.3.0",
-    "@janiscommerce/event-listener-test": "^1.0.0",
-    "@janiscommerce/event-listener": "^1.2.0",
+    "@janiscommerce/api-test": "^3.0.1",
+    "@janiscommerce/api": "^5.0.1",
+    "@janiscommerce/event-listener-test": "^2.0.0",
+    "@janiscommerce/event-listener": "^2.0.0",
     "@janiscommerce/model": "^4.1.0",
     "@janiscommerce/mongodb-index-creator": "^1.2.1",
     "@janiscommerce/settings": "^1.0.1"

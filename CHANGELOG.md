@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.1] - 2020-06-18
+### Changed
+- Updated packages versions
+
 ## [3.0.0] - 2020-05-29
 ### Added
 - New Clients settings can use `{{code}}` to have dinamic settings
