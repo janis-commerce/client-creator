@@ -25,17 +25,21 @@ describe('InstanceGetter', () => {
 
 		it('should return the class when the enviroment variable is not defined', () => {
 
+			const oldEnv = { ...process.env };
+			delete process.env.MS_PATH;
 			assert.deepStrictEqual(InstanceGetter.getModelClass('client'), ClientModel);
+			process.env = oldEnv;
 		});
 
 		it('should return the class when the enviroment variable is defined', () => {
 
+			const oldEnv = { ...process.env };
 			process.env.MS_PATH = 'ms_path';
 			assert.deepStrictEqual(InstanceGetter.getModelClass('client'), ClientModel);
-			delete (process.env.MS_PATH);
+			process.env = oldEnv;
 		});
 
-		it('should throw an error when path doesn not exists', () => {
+		it('should throw an error when path does not exists', () => {
 			assert.throws(() => InstanceGetter.getModelClass('fake'), Error);
 		});
 	});
