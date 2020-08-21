@@ -2,7 +2,7 @@
   "name": "@janiscommerce/client-creator",
   "version": "4.0.0",
   "description": "A packge that wraps all the client creation in Janis Services",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "export TEST_ENV=true; mocha --exit -R nyan --recursive tests/",
     "test-ci": "nyc --reporter=lcov --reporter=text-summary mocha --exit --recursive tests/",
