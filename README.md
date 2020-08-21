@@ -27,25 +27,66 @@ You should configure the database config in your service, in order to get the co
       "host": "core-host"
       // ...
     },
-    "default": { // DB config that the clients will use
+    "other-core": {
+      "type": "mongodb",
+      "host". "other-core-host",
+      "isCore": true // with this boolean this connection will be ingored for the new client databases
+    },
+    "default": { // DB config that the new clients will use
       "type": "mongodb",
       "host": "clients-host",
       "database": "janis-{{code}}" // necesary to add dinamic database name. Since 3.0.0
       // ...
+    },
+    "other-database": {
+      "write": {
+        "type": "solr",
+        "host": "host-solr",
+        "database": "core-{{code}}"
+      },
+      "read": {
+        "type": "solr",
+        "host": "host-read-solr",
+        "database": "core-{{code}}"
+      }
+    }
+  }
+}
+```
+
+If we create a `foo` client with the previous settings, we will get the following client
+
+```json
+{
+  "code": "foo",
+  "databases": {
+    "default": {
+      "write": {
+        "type": "mongodb",
+        "host": "clients-host",
+        "database": "janis-foo"
+      }
+    },s
+    "other-database": {
+      "write": {
+        "type": "solr",
+        "host": "host-solr",
+        "database": "core-foo"
+      },
+      "read": {
+        "type": "solr",
+        "host": "host-read-solr",
+        "database": "core-foo"
+      }
     }
   },
-  "clients": {
-    "newClientsDatabaseKey": "newClients", // The new clients config databaseKey ("newClients" by default)
-    "databaseKey": "core", // The databaseKey where store the new clients ("core" by default)
-    "table": "clients" // The clients table where create the clients ("clients" by default)
-  }
+  "status": "active"
 }
 ```
 
 _(since 3.0.0)_
 
-**The database name is required in the "newClients" settings is required!!!**
-This field should be the same in the database.newClients and clients.fields.write[database] and clients.fields.read[database] (if used)
+**The database name is required in the "default" settings is required!!!**
 
 ### ClientModel
 At `./[MS_PATH]/models/client.js`
@@ -148,12 +189,11 @@ Both `APICreate` and `ListenerCreated` have a hook for post processing the clien
 
 #### APICreate
 
-#### `postSaveHook(clientCodes, databaseSettings)`
-Receives the clientCodes from the API and the databaseSettings for the created clients.
+#### `postSaveHook(clientCodes)`
+Receives the clientCodes from the API.
 
 Parameters:
-- clientCodes `string Array`: The client created codes .
-- databaseSettings `Object`: The database settings of the created clients.
+- clientCodes `string Array`: The client created codes.
 
 ##### Example
 ```js
@@ -162,12 +202,12 @@ const { APICreate } = require('@janiscommerce/client-creator');
 
 class ClientCreateAPI extends APICreate {
 
-  async postSaveHook(clientCodes, databaseSettings) {
+  async postSaveHook(clientCodes) {
 
-      await myPostSaveMethod(clientCodes, databaseSettings);
+      await myPostSaveMethod(clientCodes);
 
-      clientCodes.forEach(code => {
-          console.log(`Saved client ${code} with host: ${databaseSettings.host}`);
+      clientCodes.forEach(clientCode => {
+          console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
       })
     }
 }
@@ -177,12 +217,11 @@ module.exports = ClientCreateAPI;
 
 #### ListenerCreated
 
-#### `postSaveHook(clientCode, databaseSettings)`
-Receives the clientCode from the event and the databaseSettings for the created client.
+#### `postSaveHook(clientCode)`
+Receives the clientCode from the event.
 
 Parameters:
-- clientCode `string`: The client created code .
-- databaseSettings `Object`: The database settings of the created client.
+- clientCode `string`: The client created code.gs of the created client.
 
 ##### Example
 ```js
@@ -192,11 +231,8 @@ const { ListenerCreated } = require('@janiscommerce/client-creator');
 
 class ClientCreateListener extends ListenerCreated {
 
-  async postSaveHook(clientCode, databaseSettings) {
-
-    await myPostSaveMethod(clientCode, databaseSettings);
-
-    console.log(`Saved client ${code} with host: ${databaseSettings.host}`);
+  async postSaveHook(clientCode) {
+    console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
   }
 }
 
