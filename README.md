@@ -19,7 +19,7 @@ After installing this package you should create or update the following files:
 You should configure the database config in your service, in order to get the correct DB config for new clients:
 
 #### .janiscommercerc.json
-```js
+```json
 {
   "database": {
     "core": { // DB config where save new clients
@@ -66,7 +66,7 @@ If we create a `foo` client with the previous settings, we will get the followin
         "host": "clients-host",
         "database": "janis-foo"
       }
-    },s
+    },
     "other-database": {
       "write": {
         "type": "solr",
@@ -83,10 +83,6 @@ If we create a `foo` client with the previous settings, we will get the followin
   "status": "active"
 }
 ```
-
-_(since 3.0.0)_
-
-**The database name is required in the "default" settings is required!!!**
 
 ### ClientModel
 At `./[MS_PATH]/models/client.js`
