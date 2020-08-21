@@ -1,8 +1,8 @@
 # client-creator
 
-[![Build Status](https://travis-ci.org/janis-commerce/client-creator.svg?branch=master)](https://travis-ci.org/janis-commerce/client-creator)
+![Build Status](https://github.com/janis-commerce/client-creator/workflows/Build%20Status/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/janis-commerce/client-creator/badge.svg?branch=master)](https://coveralls.io/github/janis-commerce/client-creator?branch=master)
-
+[![npm version](https://badge.fury.io/js/%40janiscommerce%2Fclient-creator.svg)](https://www.npmjs.com/package/@janiscommerce/client-creator)
 
 ## Introduction
 This package includes all the generic functionality of the creation of a client at the services. It main purpose is to avoid code repetition.
@@ -27,7 +27,7 @@ You should configure the database config in your service, in order to get the co
       "host": "core-host"
       // ...
     },
-    "newClients": { // DB config that the clients will use
+    "default": { // DB config that the clients will use
       "type": "mongodb",
       "host": "clients-host",
       "database": "janis-{{code}}" // necesary to add dinamic database name. Since 3.0.0

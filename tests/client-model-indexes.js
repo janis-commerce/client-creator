@@ -6,7 +6,6 @@ const path = require('path');
 const ClientModelIndexes = require('../lib/client-model-indexes');
 const ClientModel = require('../lib/model-client');
 
-
 const fakeClientPath = path.join(process.cwd(), 'models', 'client');
 
 const codeUnique = {

@@ -1,0 +1,32 @@
+{
+	"core": {
+		"host": "core-database-host",
+		"database": "core"
+	},
+	"otherCoreDB": {
+		"isCore": true,
+		"host": "core-database-host",
+		"database": "other-core-db"
+	},
+	"default": {
+		"host": "database-host",
+		"database": "janis-{{code}}",
+		"someLimit": 10
+	},
+	"onlyWriteDB": {
+		"write": {
+			"host": "write-database-host",
+			"database": "janis-write-{{code}}"
+		}
+	},
+	"completeDB": {
+		"write": {
+			"host": "complete-write-database-host",
+			"database": "janis-complete-write-{{code}}"
+		},
+		"read": {
+			"host": "complete-read-database-host",
+			"database": "janis-complete-read-{{code}}"
+		}
+	}
+}
