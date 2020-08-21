@@ -1,8 +1,8 @@
 name: NPM Publish
 
 on:
-  tag:
-    types: [created]
+  push:
+    tags: [created]
 
 jobs:
   build:
