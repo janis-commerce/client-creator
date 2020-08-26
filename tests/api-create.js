@@ -9,6 +9,7 @@ const path = require('path');
 const { APICreate, ModelClient } = require('../lib');
 
 const fakeDBSettings = require('./fake-db-settings');
+const prepareFakeClient = require('./prepare-fake-client');
 
 const fakeClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'models', 'client');
 const fakeWrongClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'client');
@@ -17,37 +18,7 @@ describe('Client Create API', () => {
 
 	const clients = ['foo', 'bar'];
 
-	const prepareClient = code => ({
-		code,
-		databases: {
-			default: {
-				write: {
-					host: 'database-host',
-					database: `janis-${code}`,
-					someLimit: 10
-				}
-			},
-			onlyWriteDB: {
-				write: {
-					host: 'write-database-host',
-					database: `janis-write-${code}`
-				}
-			},
-			completeDB: {
-				write: {
-					host: 'complete-write-database-host',
-					database: `janis-complete-write-${code}`
-				},
-				read: {
-					host: 'complete-read-database-host',
-					database: `janis-complete-read-${code}`
-				}
-			}
-		},
-		status: ModelClient.statuses.active
-	});
-
-	const clientsToSave = clients.map(code => prepareClient(code));
+	const clientsToSave = clients.map(code => prepareFakeClient(code));
 
 	APITest(APICreate, '/api/client', [
 		{

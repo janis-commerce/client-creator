@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.0.0] - 2020-08-26
+### Added
+- Model client indexes getter with `code` index
+
+### Changed
+- Upgraded `@janiscommerce/model` up to `^5.0.0`
+- Upgraded `@janiscommerce/mongodb-index-creator` up to `^2.0.0`
+
+### Removed
+- Export Model client indexes
+
+## [4.0.1] - 2020-08-21
+### Fixed
+- Fixed `package.json` main 
+
 ## [4.0.0] - 2020-08-21
 ### Added
 - GitHub Actions

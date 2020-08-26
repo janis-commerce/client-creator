@@ -11,8 +11,13 @@ This package includes all the generic functionality of the creation of a client 
 ```sh
 npm install @janiscommerce/client-creator
 ```
-## Configuration
 
+## Changes _Since `5.0.0`_
+- 🆙 Upgraded `@janiscommerce/model` up to `^5.0.0`
+- 🆙 Upgraded `@janiscommerce/mongodb-index-creator` up to `^2.0.0`
+- ⚠️ Removed `clientModelIndexes`, the indexes now are included in `ModelClient` ✅
+
+## Configuration
 After installing this package you should create or update the following files:
 
 ### Service settings (.janiscommercerc)
@@ -116,22 +121,6 @@ const { ListenerCreated } = require('@janiscommerce/client-creator');
 module.exports.handler = (...args) => ServerlessHandler.handle(ListenerCreated, ...args);
 ```
 
-### clientModelIndexes
-At `./schemas/mongo/core.js`
-
-```js
-'use strict';
-
-const { clientModelIndexes } = require('@janiscommerce/client-creator');
-
-module.exports = {
-	core: {
-		//...ohter indexes
-		...clientModelIndexes()
-	}
-};
-```
-
 ### clientFunctions
 At `./serverless.js`
 
@@ -140,17 +129,14 @@ At `./serverless.js`
 
 const { helper } = require('sls-helper'); // eslint-disable-line
 const { clientFunctions } = require('@janiscommerce/client-creator');
-const functions = require('./serverless/functions.json');
 
 module.exports = helper({
 	hooks: [
 		// other hooks
-		...functions,
 		...clientFunctions
 	]
 });
 ```
-:warning: If they exist, delete the functions from the `./serverless/functions.json` file.
 
 ### Schemas
 Add schemas for the Client Created event listener and the Create Client API post. Subscribe to events.

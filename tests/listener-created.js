@@ -10,6 +10,7 @@ const path = require('path');
 const { ListenerCreated, ModelClient } = require('../lib');
 
 const fakeDBSettings = require('./fake-db-settings');
+const prepareFakeClient = require('./prepare-fake-client');
 
 const fakeClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'models', 'client');
 
@@ -24,38 +25,12 @@ describe('Client Created Listener', async () => {
 		event: 'created'
 	};
 
-	const prepareClient = code => ({
-		code,
-		databases: {
-			default: {
-				write: {
-					host: 'database-host',
-					database: `janis-${code}`,
-					someLimit: 10
-				}
-			},
-			onlyWriteDB: {
-				write: {
-					host: 'write-database-host',
-					database: `janis-write-${code}`
-				}
-			},
-			completeDB: {
-				write: {
-					host: 'complete-write-database-host',
-					database: `janis-complete-write-${code}`
-				},
-				read: {
-					host: 'complete-read-database-host',
-					database: `janis-complete-read-${code}`
-				}
-			}
-		},
-		status: ModelClient.statuses.active
-	});
+	const stubSettings = sandbox => {
+		sandbox.stub(Settings, 'get')
+			.returns(fakeDBSettings);
+	};
 
 	await EventListenerTest(handler, [
-
 		{
 			description: 'Should return 400 when the event has no ID',
 			event: {
@@ -74,14 +49,14 @@ describe('Client Created Listener', async () => {
 				sandbox.stub(ModelClient.prototype, 'save')
 					.rejects();
 
-				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+				stubSettings(sandbox);
 
 				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
 					.resolves();
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareClient('some-client'));
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient('some-client'));
 				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
 				mockRequire.stop(fakeClientPath);
 			},
@@ -97,14 +72,15 @@ describe('Client Created Listener', async () => {
 				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves();
 
-				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+				stubSettings(sandbox);
+
 
 				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
 					.rejects();
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareClient('some-client'));
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient('some-client'));
 				sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientCode);
 				mockRequire.stop(fakeClientPath);
 			},
@@ -120,7 +96,7 @@ describe('Client Created Listener', async () => {
 				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves('5dea9fc691240d00084083f9');
 
-				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+				stubSettings(sandbox);
 
 				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
 					.resolves();
@@ -129,7 +105,7 @@ describe('Client Created Listener', async () => {
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareClient('some-client'));
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient('some-client'));
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, 'some-client');
 				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, 'some-client');
 				mockRequire.stop(fakeClientPath);
