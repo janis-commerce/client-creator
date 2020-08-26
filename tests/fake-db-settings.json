@@ -1,13 +1,4 @@
 {
-	"core": {
-		"host": "core-database-host",
-		"database": "core"
-	},
-	"otherCoreDB": {
-		"isCore": true,
-		"host": "core-database-host",
-		"database": "other-core-db"
-	},
 	"default": {
 		"host": "database-host",
 		"database": "janis-{{code}}",

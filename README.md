@@ -20,23 +20,13 @@ npm install @janiscommerce/client-creator
 ## Configuration
 After installing this package you should create or update the following files:
 
-### Service settings (.janiscommercerc)
-You should configure the database config in your service, in order to get the correct DB config for new clients:
+### Service Settings
+You should configure the database config in your service for the new clients using the package [Settings](https://www.npmjs.com/package/@janiscommerce/settings) and the `newClientsDatabases`
 
 #### .janiscommercerc.json
 ```json
 {
-  "database": {
-    "core": { // DB config where save new clients
-      "type": "mongodb",
-      "host": "core-host"
-      // ...
-    },
-    "other-core": {
-      "type": "mongodb",
-      "host". "other-core-host",
-      "isCore": true // with this boolean this connection will be ingored for the new client databases
-    },
+  "newClientsDatabases": {
     "default": { // DB config that the new clients will use
       "type": "mongodb",
       "host": "clients-host",

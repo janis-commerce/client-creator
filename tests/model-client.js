@@ -13,6 +13,10 @@ describe('ClientModel', () => {
 
 	describe('Getters', () => {
 
+		it('Should return the databaseKey', () => {
+			assert.equal(ClientModel.prototype.databaseKey, 'core');
+		});
+
 		it('Should return collection name when table getter is used', () => {
 			assert.equal(ClientModel.table, 'clients');
 		});

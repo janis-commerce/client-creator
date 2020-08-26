@@ -44,7 +44,7 @@
     "@janiscommerce/api": "^5.1.2",
     "@janiscommerce/event-listener": "^2.0.0",
     "@janiscommerce/model": "^5.0.0",
-    "@janiscommerce/mongodb-index-creator": "^2.0.0",
+    "@janiscommerce/mongodb-index-creator": "^2.1.0",
     "@janiscommerce/settings": "^1.0.1"
   }
 }
