@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/client-creator",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "A packge that wraps all the client creation in Janis Services",
   "main": "lib/index.js",
   "scripts": {
