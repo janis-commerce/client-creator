@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.0.2] - 2020-09-09
+### Changed
+- Updated dependencies versions
+- Upgraded `@janiscommerce/api` up to `^6.0.1`
+- Upgraded `@janiscommerce/event-listener` up to `^3.0.0`
+
 ## [5.0.1] - 2020-08-26
 ### Fixed
 - Replaced setting used `database` with `newClientsDatabases`
