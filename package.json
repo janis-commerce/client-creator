@@ -43,6 +43,7 @@
   "dependencies": {
     "@janiscommerce/api": "^6.0.1",
     "@janiscommerce/event-listener": "^3.0.0",
+    "@janiscommerce/microservice-call": "^4.1.2",
     "@janiscommerce/model": "^5.0.0",
     "@janiscommerce/mongodb-index-creator": "^2.2.3",
     "@janiscommerce/settings": "^1.0.1"
