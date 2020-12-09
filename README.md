@@ -89,6 +89,16 @@ const { ModelClient } = require('@janiscommerce/client-creator');
 module.exports = ModelClient;
 ```
 
+### DefaultClientModel
+At `./[MS_PATH]/models/default-client.js`
+
+```js
+'use strict';
+const { ModelDefaultClient } = require('@janiscommerce/client-creator');
+
+module.exports = ModelDefaultClient;
+```
+
 ### APICreate
 At `./[MS_PATH]/api/client/post.js`
 
@@ -111,6 +121,30 @@ const { ListenerCreated } = require('@janiscommerce/client-creator');
 module.exports.handler = (...args) => ServerlessHandler.handle(ListenerCreated, ...args);
 ```
 
+### ListenerUpdated
+At `./[MS_PATH]/event-listeners/id/client/updated.js`
+
+```js
+'use strict';
+
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerUpdated } = require('@janiscommerce/client-creator');
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ListenerUpdated, ...args);
+```
+
+### ListenerRemoved
+At `./[MS_PATH]/event-listeners/id/client/removed.js`
+
+```js
+'use strict';
+
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerRemoved } = require('@janiscommerce/client-creator');
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ListenerRemoved, ...args);
+```
+
 ### clientFunctions
 At `./serverless.js`
 
@@ -129,7 +163,7 @@ module.exports = helper({
 ```
 
 ### Schemas
-Add schemas for the Client Created event listener and the Create Client API post. Subscribe to events.
+Add schemas for the Client Created, Updated and Removed event listeners and the Create Client API post. Subscribe to events.
 
 At ` ./schemas/client/` add these two files:
 - [create.yml](schemas/create.yml)
@@ -138,6 +172,8 @@ At ` ./schemas/client/` add these two files:
 
 At ` ./schemas/event-listeners/id/client` add this file: 
 - [created.yml](schemas/created.yml)
+- [updated.yml](schemas/updated.yml)
+- [removed.yml](schemas/removed.yml)
 
 At ` ./events/src/id/` add this file: 
 - [client.yml](schemas/client.yml)
@@ -148,7 +184,10 @@ Finally, create or update `./.nycrc` to avoid coverage leaks:
   "exclude": [
     //... your files
     "src/event-listeners/id/client/created.js",
+    "src/event-listeners/id/client/updated.js",
+    "src/event-listeners/id/client/removed.js",
     "src/models/client.js",
+    "src/models/default-client.js",
     "src/api/client/post.js"
   ]
 }
@@ -157,7 +196,7 @@ Finally, create or update `./.nycrc` to avoid coverage leaks:
 :warning: If exists any customization of the files, do not add the file to the .nyrcr and add the corresponding tests.
 
 ### Hooks
-Both `APICreate` and `ListenerCreated` have a hook for post processing the client or clients created data.
+The `APICreate`, `ListenerCreated` and `ListenerUpdated` have a hook for post processing the client or clients created data.
 
 #### APICreate
 

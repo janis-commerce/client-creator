@@ -51,15 +51,12 @@ describe('Client Removed Listener', async () => {
 
 				sandbox.spy(ModelClient.prototype, 'remove');
 
-				sandbox.spy(ListenerRemoved.prototype, 'postSaveHook');
-
 			},
 			after: sandbox => {
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code);
 				sandbox.assert.notCalled(ModelDefaultClient.prototype.dropDatabase);
 				sandbox.assert.notCalled(ModelClient.prototype.remove);
-				sandbox.assert.notCalled(ListenerRemoved.prototype.postSaveHook);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 500
@@ -77,14 +74,11 @@ describe('Client Removed Listener', async () => {
 					.rejects();
 
 
-				sandbox.spy(ListenerRemoved.prototype, 'postSaveHook');
-
 			},
 			after: sandbox => {
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', validEvent.client);
 				sandbox.assert.calledOnceWithExactly(ModelDefaultClient.prototype.dropDatabase);
-				sandbox.assert.notCalled(ListenerRemoved.prototype.postSaveHook);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 500
@@ -102,15 +96,12 @@ describe('Client Removed Listener', async () => {
 
 				sandbox.stub(ModelClient.prototype, 'remove').rejects();
 
-				sandbox.spy(ListenerRemoved.prototype, 'postSaveHook');
-
 			},
 			after: sandbox => {
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code);
 				sandbox.assert.calledOnceWithExactly(ModelDefaultClient.prototype.dropDatabase);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
-				sandbox.assert.notCalled(ListenerRemoved.prototype.postSaveHook);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 500
@@ -128,15 +119,12 @@ describe('Client Removed Listener', async () => {
 
 				sandbox.stub(ModelClient.prototype, 'remove').resolves(true);
 
-				sandbox.spy(ListenerRemoved.prototype, 'postSaveHook');
-
 			},
 			after: sandbox => {
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code);
 				sandbox.assert.calledOnceWithExactly(ModelDefaultClient.prototype.dropDatabase);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
-				sandbox.assert.calledOnceWithExactly(ListenerRemoved.prototype.postSaveHook);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 200
