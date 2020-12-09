@@ -4,7 +4,7 @@ paths:
       x-janis-namespace: id-client
       x-janis-method: removed-listener
       tags:
-        - Client
+        - Private
       summary: Client removed event listener
       security:
         - ApiKey: []
@@ -16,22 +16,7 @@ paths:
         content:
           application/json:
             schema:
-              description: A JANIS Event object
-              type: object
-              properties:
-                service:
-                  $ref: "#/components/schemas/listenerEvent/properties/service"
-                entity:
-                  $ref: "#/components/schemas/listenerEvent/properties/entity"
-                event:
-                  $ref: "#/components/schemas/listenerEvent/properties/event"
-                client:
-                  $ref: "#/components/schemas/listenerEvent/properties/client"
-              required:
-                - service
-                - entity
-                - event
-                - client
+              $ref: "#/components/schemas/listenerEvent"
       responses:
         "200":
           $ref: "#/components/responses/GenericSuccess"

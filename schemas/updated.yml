@@ -3,8 +3,9 @@ paths:
     post:
       x-janis-namespace: id-client
       x-janis-method: updated-listener
+      x-janis-private: true
       tags:
-        - Client
+        - Private
       summary: Client updated event listener
       security:
         - ApiKey: []
@@ -16,23 +17,7 @@ paths:
         content:
           application/json:
             schema:
-              description: A JANIS Event object
-              type: object
-              properties:
-                service:
-                  $ref: "#/components/schemas/listenerEvent/properties/service"
-                entity:
-                  $ref: "#/components/schemas/listenerEvent/properties/entity"
-                event:
-                  $ref: "#/components/schemas/listenerEvent/properties/event"
-                id:
-                  $ref: "#/components/schemas/listenerEvent/properties/id"
-              required:
-                - service
-                - entity
-                - event
-                - id
-              # $ref: "#/components/schemas/listenerEvent"
+              $ref: "#/components/schemas/listenerEvent"
       responses:
         "200":
           $ref: "#/components/responses/GenericSuccess"
