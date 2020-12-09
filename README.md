@@ -226,14 +226,14 @@ class ClientCreateAPI extends APICreate {
 module.exports = ClientCreateAPI;
 ```
 
-#### ListenerCreated
-
+#### Listeners created and updated 
 #### `postSaveHook(clientCode)`
 Receives the clientCode from the event.
 
 Parameters:
 - clientCode `string`: The client created code.gs of the created client.
 
+Both listeners can be implemented as the example bellow:
 ##### Example
 ```js
 'use strict';
