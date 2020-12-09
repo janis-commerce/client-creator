@@ -1,0 +1,28 @@
+paths:
+  /listener/id/client/updated:
+    post:
+      x-janis-namespace: id-client
+      x-janis-method: updated-listener
+      tags:
+        - Client
+      summary: Client updated event listener
+      security:
+        - ApiKey: []
+          ApiSecret: []
+      description: Client updated event listener
+      operationId: clientUpdatedListener
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/listenerEvent"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericSuccess"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"

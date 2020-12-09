@@ -4,3 +4,17 @@
   listeners:
     - namespace: id-client
       method: created-listener
+
+- service: id
+  entity: client
+  event: updated
+  listeners:
+    - namespace: id-client
+      method: updated-listener
+
+- service: id
+  entity: client
+  event: removed
+  listeners:
+    - namespace: id-client
+      method: removed-listener
