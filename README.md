@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/%40janiscommerce%2Fclient-creator.svg)](https://www.npmjs.com/package/@janiscommerce/client-creator)
 
 ## Introduction
-This package includes all the generic functionality of the creation of a client at the services. It main purpose is to avoid code repetition.
+This package includes all the generic functionality to create, update and remove a client from the services. Its main purpose is to avoid code repetition.
 
 ## Installation
 ```sh
@@ -89,16 +89,6 @@ const { ModelClient } = require('@janiscommerce/client-creator');
 module.exports = ModelClient;
 ```
 
-### DefaultClientModel
-At `./[MS_PATH]/models/default-client.js`
-
-```js
-'use strict';
-const { ModelDefaultClient } = require('@janiscommerce/client-creator');
-
-module.exports = ModelDefaultClient;
-```
-
 ### APICreate
 At `./[MS_PATH]/api/client/post.js`
 
@@ -110,7 +100,8 @@ module.exports = APICreate;
 ```
 
 ### ListenerCreated
-At `./[MS_PATH]/event-listeners/id/client/created.js`
+This listener handles a created event emitted by Janis ID service. It allows to create a new client in the core database and set a new database for him.  
+Use it at `./[MS_PATH]/event-listeners/id/client/created.js`
 
 ```js
 'use strict';
@@ -122,7 +113,9 @@ module.exports.handler = (...args) => ServerlessHandler.handle(ListenerCreated, 
 ```
 
 ### ListenerUpdated
-At `./[MS_PATH]/event-listeners/id/client/updated.js`
+This listener handles an updated event emitted by Janis ID service. It allows to activate or deactivate a client by changing his status.  
+
+Use it at `./[MS_PATH]/event-listeners/id/client/updated.js`
 
 ```js
 'use strict';
@@ -134,7 +127,9 @@ module.exports.handler = (...args) => ServerlessHandler.handle(ListenerUpdated, 
 ```
 
 ### ListenerRemoved
-At `./[MS_PATH]/event-listeners/id/client/removed.js`
+This listener handles a removed event emitted by Janis ID service. It allows to remove a client from the core clients database and drop his database.  
+
+Use it at `./[MS_PATH]/event-listeners/id/client/removed.js`
 
 ```js
 'use strict';
