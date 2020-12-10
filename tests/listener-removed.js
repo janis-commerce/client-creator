@@ -2,10 +2,11 @@
 
 const EventListenerTest = require('@janiscommerce/event-listener-test');
 const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const Model = require('@janiscommerce/model');
 const mockRequire = require('mock-require');
 const path = require('path');
 
-const { ListenerRemoved, ModelClient, ModelDefaultClient } = require('../lib');
+const { ListenerRemoved, ModelClient } = require('../lib');
 
 const fakeClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'models', 'client');
 
@@ -29,6 +30,11 @@ describe('Client Removed Listener', async () => {
 		event: 'removed'
 	};
 
+	const sandboxAssertGetBy = sandbox => {
+		sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code, { unique: true });
+	};
+
+
 	await EventListenerTest(handler, [
 		{
 			description: 'Should return 400 when the event has no client',
@@ -47,16 +53,18 @@ describe('Client Removed Listener', async () => {
 
 				sandbox.stub(ModelClient.prototype, 'getBy').rejects();
 
-				sandbox.spy(ModelDefaultClient.prototype, 'dropDatabase');
+				sandbox.spy(Model.prototype, 'dropDatabase');
 
 				sandbox.spy(ModelClient.prototype, 'remove');
 
+				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code);
-				sandbox.assert.notCalled(ModelDefaultClient.prototype.dropDatabase);
+				sandboxAssertGetBy(sandbox);
+				sandbox.assert.notCalled(Model.prototype.dropDatabase);
 				sandbox.assert.notCalled(ModelClient.prototype.remove);
+				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 500
@@ -70,15 +78,16 @@ describe('Client Removed Listener', async () => {
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
 
-				sandbox.stub(ModelDefaultClient.prototype, 'dropDatabase')
+				sandbox.stub(Model.prototype, 'dropDatabase')
 					.rejects();
 
-
+				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', validEvent.client);
-				sandbox.assert.calledOnceWithExactly(ModelDefaultClient.prototype.dropDatabase);
+				sandboxAssertGetBy(sandbox);
+				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
+				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 500
@@ -92,16 +101,18 @@ describe('Client Removed Listener', async () => {
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
 
-				sandbox.stub(ModelDefaultClient.prototype, 'dropDatabase').resolves(true);
+				sandbox.stub(Model.prototype, 'dropDatabase').resolves(true);
 
 				sandbox.stub(ModelClient.prototype, 'remove').rejects();
 
+				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code);
-				sandbox.assert.calledOnceWithExactly(ModelDefaultClient.prototype.dropDatabase);
+				sandboxAssertGetBy(sandbox);
+				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
+				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 500
@@ -115,16 +126,18 @@ describe('Client Removed Listener', async () => {
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
 
-				sandbox.stub(ModelDefaultClient.prototype, 'dropDatabase').resolves(true);
+				sandbox.stub(Model.prototype, 'dropDatabase').resolves(true);
 
 				sandbox.stub(ModelClient.prototype, 'remove').resolves(true);
 
+				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code);
-				sandbox.assert.calledOnceWithExactly(ModelDefaultClient.prototype.dropDatabase);
+				sandboxAssertGetBy(sandbox);
+				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
+				sandbox.assert.calledOnceWithExactly(ListenerRemoved.prototype.postRemovedHook, client.code);
 				mockRequire.stop(fakeClientPath);
 			},
 			responseCode: 200
