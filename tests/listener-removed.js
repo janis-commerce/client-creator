@@ -60,7 +60,7 @@ describe('Client Removed Listener', async () => {
 			before: sandbox => {
 				mockRequire(fakeClientPath, ModelClient);
 
-				sandbox.stub(ModelClient.prototype, 'getBy').resolves({});
+				sandbox.stub(ModelClient.prototype, 'getBy').resolves(null);
 
 				sandbox.spy(Model.prototype, 'dropDatabase');
 
