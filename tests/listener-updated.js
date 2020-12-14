@@ -23,7 +23,18 @@ describe('Client Updated Listener', async () => {
 
 	const client = {
 		code: 'test1',
-		databases: { default: [Object] },
+		databases: {
+			default: {
+				write: {
+					type: 'mongodb',
+					protocol: 'mongodb+srv://',
+					user: 'user',
+					password: 'some-password',
+					host: 'somehost.mongodb.net/test?retryWrites=true&w=majority',
+					database: 'janis-fizzmodarg'
+				}
+			}
+		},
 		dateCreated: '2020-11-27T12:40:28.917Z',
 		dateModified: '2020-11-27T19:23:25.624Z',
 		status: 'inactive',
@@ -44,19 +55,16 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 500 when client model fails updating the status',
 				event: validEvent,
 				before: sandbox => {
-
 					mockRequire(fakeClientPath, ModelClient);
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
 						.resolves({ statusCode: 200, body: client });
 
-					sandbox.stub(ModelClient.prototype, 'update')
-						.rejects();
+					sandbox.stub(ModelClient.prototype, 'update').rejects();
 
 					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
 				after: sandbox => {
-
 					sandbox.assert.calledOnceWithExactly(ModelClient.prototype.update, { status: client.status }, { code: client.code });
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, 'id', 'client', 'get', null, null, validEvent.id);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
@@ -68,7 +76,6 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 500 and throw custom error when msCall fails to getting the client',
 				event: validEvent,
 				before: sandbox => {
-
 					mockRequire(fakeClientPath, ModelClient);
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
@@ -79,7 +86,6 @@ describe('Client Updated Listener', async () => {
 					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
 				after: sandbox => {
-
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, 'id', 'client', 'get', null, null, validEvent.id);
 					sandbox.assert.notCalled(ModelClient.prototype.update);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
@@ -91,7 +97,6 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 500 and throw generic error when msCall fails to getting the client',
 				event: validEvent,
 				before: sandbox => {
-
 					mockRequire(fakeClientPath, ModelClient);
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
@@ -102,7 +107,6 @@ describe('Client Updated Listener', async () => {
 					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
 				after: sandbox => {
-
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, 'id', 'client', 'get', null, null, validEvent.id);
 					sandbox.assert.notCalled(ModelClient.prototype.update);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
@@ -112,13 +116,13 @@ describe('Client Updated Listener', async () => {
 			}
 		]);
 	});
+
 	describe('200 response', async () => {
 		await EventListenerTest(handler, [
 			{
 				description: 'Should return 200 and return when msCall gets 400 error',
 				event: validEvent,
 				before: sandbox => {
-
 					mockRequire(fakeClientPath, ModelClient);
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
@@ -129,7 +133,6 @@ describe('Client Updated Listener', async () => {
 					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
 				after: sandbox => {
-
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, 'id', 'client', 'get', null, null, validEvent.id);
 					sandbox.assert.notCalled(ModelClient.prototype.update);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
@@ -141,7 +144,6 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 200 and return when msCall could not find the client',
 				event: validEvent,
 				before: sandbox => {
-
 					mockRequire(fakeClientPath, ModelClient);
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
@@ -152,7 +154,6 @@ describe('Client Updated Listener', async () => {
 					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
 				after: sandbox => {
-
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, 'id', 'client', 'get', null, null, validEvent.id);
 					sandbox.assert.notCalled(ModelClient.prototype.update);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
@@ -164,7 +165,6 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 200 when client model updates the client status',
 				event: validEvent,
 				before: sandbox => {
-
 					mockRequire(fakeClientPath, ModelClient);
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
@@ -176,7 +176,6 @@ describe('Client Updated Listener', async () => {
 					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
 				after: sandbox => {
-
 					sandbox.assert.calledOnceWithExactly(ModelClient.prototype.update, { status: client.status }, { code: client.code });
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, 'id', 'client', 'get', null, null, validEvent.id);
 					sandbox.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, validEvent.id);

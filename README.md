@@ -30,7 +30,7 @@ You should configure the database config in your service for the new clients usi
     "default": { // DB config that the new clients will use
       "type": "mongodb",
       "host": "clients-host",
-      "database": "janis-{{code}}" // necesary to add dinamic database name. Since 3.0.0
+      "database": "janis-{{code}}" // necessary to add dynamic database name. Since 3.0.0
       // ...
     },
     "other-database": {
@@ -182,7 +182,6 @@ Finally, create or update `./.nycrc` to avoid coverage leaks:
     "src/event-listeners/id/client/updated.js",
     "src/event-listeners/id/client/removed.js",
     "src/models/client.js",
-    "src/models/default-client.js",
     "src/api/client/post.js"
   ]
 }
@@ -191,7 +190,7 @@ Finally, create or update `./.nycrc` to avoid coverage leaks:
 :warning: If exists any customization of the files, do not add the file to the .nyrcr and add the corresponding tests.
 
 ### Hooks
-The `APICreate`, `ListenerCreated` and `ListenerUpdated` have a hook for post processing the client or clients created data.
+The `APICreate` and `listeners` have a hook for post processing the client or clients created data.
 
 #### APICreate
 
@@ -221,14 +220,14 @@ class ClientCreateAPI extends APICreate {
 module.exports = ClientCreateAPI;
 ```
 
-#### Listeners created and updated 
+#### Listener Created   
 #### `postSaveHook(clientCode)`
 Receives the clientCode from the event.
 
 Parameters:
 - clientCode `string`: The client created code.gs of the created client.
 
-Both listeners can be implemented as the example bellow:
+It can be implemented as the example bellow:
 ##### Example
 ```js
 'use strict';
@@ -243,4 +242,53 @@ class ClientCreateListener extends ListenerCreated {
 }
 
 module.exports.handler = (...args) => ServerlessHandler.handle(ClientCreateListener, ...args);
+```
+
+#### Listener Updated 
+#### `postSaveHook(clientId)`
+Receives the clientId from the event.
+
+Parameters:
+- clientId `string`: The client id in Janis ID.
+
+It can be implemented as the example bellow:
+##### Example
+```js
+'use strict';
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerUpdated } = require('@janiscommerce/client-creator');
+
+class ClientUpdateListener extends ListenerUpdated {
+
+  async postSaveHook(clientId) {
+    console.log(`Saved client ${clientID}, now i'm gonna do something great`);
+  }
+}
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ClientUpdateListener, ...args);
+```
+
+#### Listener Removed  
+#### `postRemovedHook(clientCodes)`
+Receives the removed clientCodes from the API.
+
+Parameters:
+- clientCodes `string`: The client removed code.  
+
+It can be implemented as the example bellow:
+
+##### Example
+```js
+'use strict';
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerRemoved } = require('@janiscommerce/client-creator');
+
+class ClientRemovedListener extends ListenerRemoved {
+
+  async postRemovedHook(clientCode) {
+    console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
+  }
+}
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ClientRemovedListener, ...args);
 ```

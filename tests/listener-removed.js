@@ -16,7 +16,18 @@ describe('Client Removed Listener', async () => {
 
 	const client = {
 		code: 'test1',
-		databases: { default: [Object] },
+		databases: {
+			default: {
+				write: {
+					type: 'mongodb',
+					protocol: 'mongodb+srv://',
+					user: 'user',
+					password: 'some-password',
+					host: 'somehost.mongodb.net/test?retryWrites=true&w=majority',
+					database: 'janis-fizzmodarg'
+				}
+			}
+		},
 		dateCreated: '2020-11-27T12:40:28.917Z',
 		dateModified: '2020-11-27T19:23:25.624Z',
 		status: 'active',
@@ -34,7 +45,6 @@ describe('Client Removed Listener', async () => {
 		sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code, { unique: true });
 	};
 
-
 	await EventListenerTest(handler, [
 		{
 			description: 'Should return 400 when the event has no client',
@@ -45,10 +55,32 @@ describe('Client Removed Listener', async () => {
 			responseCode: 400
 		},
 		{
+			description: 'Should return 404 when client model could not found the client',
+			event: validEvent,
+			before: sandbox => {
+				mockRequire(fakeClientPath, ModelClient);
+
+				sandbox.stub(ModelClient.prototype, 'getBy').resolves({});
+
+				sandbox.spy(Model.prototype, 'dropDatabase');
+
+				sandbox.spy(ModelClient.prototype, 'remove');
+
+				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
+			},
+			after: sandbox => {
+				sandboxAssertGetBy(sandbox);
+				sandbox.assert.notCalled(Model.prototype.dropDatabase);
+				sandbox.assert.notCalled(ModelClient.prototype.remove);
+				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
+				mockRequire.stop(fakeClientPath);
+			},
+			responseCode: 404
+		},
+		{
 			description: 'Should return 500 when client model fails getting the client',
 			event: validEvent,
 			before: sandbox => {
-
 				mockRequire(fakeClientPath, ModelClient);
 
 				sandbox.stub(ModelClient.prototype, 'getBy').rejects();
@@ -60,7 +92,6 @@ describe('Client Removed Listener', async () => {
 				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
 			after: sandbox => {
-
 				sandboxAssertGetBy(sandbox);
 				sandbox.assert.notCalled(Model.prototype.dropDatabase);
 				sandbox.assert.notCalled(ModelClient.prototype.remove);
@@ -70,7 +101,7 @@ describe('Client Removed Listener', async () => {
 			responseCode: 500
 		},
 		{
-			description: 'Should return 500 when model default client fails to dropping the database',
+			description: 'Should return 500 when model default client fails to drop the database',
 			event: validEvent,
 			before: sandbox => {
 
@@ -78,13 +109,11 @@ describe('Client Removed Listener', async () => {
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
 
-				sandbox.stub(Model.prototype, 'dropDatabase')
-					.rejects();
+				sandbox.stub(Model.prototype, 'dropDatabase').rejects();
 
 				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
 			after: sandbox => {
-
 				sandboxAssertGetBy(sandbox);
 				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
 				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
@@ -96,7 +125,6 @@ describe('Client Removed Listener', async () => {
 			description: 'Should return 500 when model default client fails removing the client',
 			event: validEvent,
 			before: sandbox => {
-
 				mockRequire(fakeClientPath, ModelClient);
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
@@ -108,7 +136,6 @@ describe('Client Removed Listener', async () => {
 				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
 			after: sandbox => {
-
 				sandboxAssertGetBy(sandbox);
 				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
@@ -121,7 +148,6 @@ describe('Client Removed Listener', async () => {
 			description: 'Should return 200 when client was removed',
 			event: validEvent,
 			before: sandbox => {
-
 				mockRequire(fakeClientPath, ModelClient);
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
@@ -133,7 +159,6 @@ describe('Client Removed Listener', async () => {
 				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
 			after: sandbox => {
-
 				sandboxAssertGetBy(sandbox);
 				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
