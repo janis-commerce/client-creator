@@ -245,11 +245,11 @@ module.exports.handler = (...args) => ServerlessHandler.handle(ClientCreateListe
 ```
 
 #### Listener Updated 
-#### `postSaveHook(clientId)`
-Receives the clientId from the event.
+#### `postSaveHook(currentClient)`
+Receives the currentClient from the event.
 
 Parameters:
-- clientId `string`: The client id in Janis ID.
+- currentClient `object`: The recently updated client.
 
 It can be implemented as the example bellow:
 ##### Example
@@ -260,8 +260,8 @@ const { ListenerUpdated } = require('@janiscommerce/client-creator');
 
 class ClientUpdateListener extends ListenerUpdated {
 
-  async postSaveHook(clientId) {
-    console.log(`Saved client ${clientID}, now i'm gonna do something great`);
+  async postSaveHook(currentClient) {
+    console.log(`Saved client ${currentClient.name}, now i'm gonna do something great`);
   }
 }
 
@@ -269,11 +269,11 @@ module.exports.handler = (...args) => ServerlessHandler.handle(ClientUpdateListe
 ```
 
 #### Listener Removed  
-#### `postRemovedHook(clientCodes)`
-Receives the removed clientCodes from the API.
+#### `postRemovedHook(clientCode)`
+Receives the removed clientCode from the API.
 
 Parameters:
-- clientCodes `string`: The client removed code.  
+- clientCode `string`: The client removed code.  
 
 It can be implemented as the example bellow:
 
