@@ -1,7 +1,7 @@
 'use strict';
 
 const APITest = require('@janiscommerce/api-test');
-const MongoDBIndexCreator = require('@janiscommerce/mongodb-index-creator');
+const { Invoker } = require('@janiscommerce/lambda');
 const Settings = require('@janiscommerce/settings');
 const mockRequire = require('mock-require');
 const path = require('path');
@@ -36,7 +36,7 @@ describe('Client Create API', () => {
 				sandbox.stub(ModelClient.prototype, 'multiSave')
 					.resolves(true);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
+				sandbox.stub(Invoker, 'call')
 					.resolves();
 
 				sandbox.spy(APICreate.prototype, 'postSaveHook');
@@ -44,6 +44,8 @@ describe('Client Create API', () => {
 			after: (res, sandbox) => {
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
+
+				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
 				sandbox.assert.calledOnceWithExactly(
 					APICreate.prototype.postSaveHook,
@@ -68,18 +70,18 @@ describe('Client Create API', () => {
 				sandbox.stub(ModelClient.prototype, 'multiSave')
 					.rejects();
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
+				sandbox.stub(Invoker, 'call')
 					.resolves();
 			},
 			after: (res, sandbox) => {
 
 				mockRequire.stop(fakeClientPath);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
-				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientDatabases);
+				sandbox.assert.notCalled(Invoker.call);
 			}
 		},
 		{
-			description: 'Should return 500 when the index creator fails',
+			description: 'Should return 500 when invoking the index creator lambda fails',
 			request: {
 				data: { clients }
 			},
@@ -93,14 +95,14 @@ describe('Client Create API', () => {
 				sandbox.stub(ModelClient.prototype, 'multiSave')
 					.resolves();
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
+				sandbox.stub(Invoker, 'call')
 					.rejects();
 			},
 			after: (res, sandbox) => {
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
 
-				sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientDatabases);
+				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 				mockRequire.stop(fakeClientPath);
 			}
 		},
@@ -143,13 +145,13 @@ describe('Client Create API', () => {
 				sandbox.stub(ModelClient.prototype, 'multiSave')
 					.resolves(true);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientDatabases')
+				sandbox.stub(Invoker, 'call')
 					.resolves();
 			},
 			after: (res, sandbox) => {
 
 				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
-				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientDatabases);
+				sandbox.assert.notCalled(Invoker.call);
 				mockRequire.stop(fakeClientPath);
 			}
 		}

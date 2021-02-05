@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.1.1] - 2021-02-105
+### Changed
+- API Create - Using Lambda.Invoker to create Indexes in MongoDB
+
 ## [5.1.0] - 2020-12-15
 ### Added
 - `UpdatedListener` to activate or deactivate a client
