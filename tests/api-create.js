@@ -22,6 +22,7 @@ describe('Client Create API', () => {
 
 	APITest(APICreate, '/api/client', [
 		{
+			only: 1,
 			description: 'Should save all the received new clients to clients DB',
 			request: {
 				data: { clients }

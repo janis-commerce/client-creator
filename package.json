@@ -25,11 +25,11 @@
   "devDependencies": {
     "@janiscommerce/api-test": "^4.0.0",
     "@janiscommerce/event-listener-test": "^3.0.0",
-    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-config-airbnb-base": "^13.2.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint": "^7.19.0",
+    "eslint": "^7.22.0",
     "husky": "^4.3.8",
-    "mocha": "^8.2.1",
+    "mocha": "^8.3.2",
     "mock-require": "^3.0.3",
     "nyc": "^15.1.0",
     "sinon": "^9.2.4"
@@ -43,11 +43,12 @@
   "dependencies": {
     "@janiscommerce/api": "^6.2.1",
     "@janiscommerce/api-session": "^3.1.1",
+    "@janiscommerce/aws-secrets-manager": "^0.2.0",
     "@janiscommerce/event-listener": "^3.0.0",
     "@janiscommerce/lambda": "^3.1.0",
     "@janiscommerce/microservice-call": "^4.2.0",
-    "@janiscommerce/model": "^5.3.1",
-    "@janiscommerce/mongodb-index-creator": "^2.2.3",
+    "@janiscommerce/model": "^5.4.0",
+    "@janiscommerce/mongodb-index-creator": "^2.3.0",
     "@janiscommerce/settings": "^1.0.1"
   }
 }
