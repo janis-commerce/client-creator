@@ -6,7 +6,10 @@ const Settings = require('@janiscommerce/settings');
 const mockRequire = require('mock-require');
 const path = require('path');
 
+const { AwsSecretsManager } = require('@janiscommerce/aws-secrets-manager');
+
 const { APICreate, ModelClient } = require('../lib');
+const CredentialsFetcher = require('../lib/helpers/credentials-fetcher');
 
 const fakeDBSettings = require('./fake-db-settings');
 const prepareFakeClient = require('./prepare-fake-client');
@@ -14,15 +17,32 @@ const prepareFakeClient = require('./prepare-fake-client');
 const fakeClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'models', 'client');
 const fakeWrongClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'client');
 
-describe('Client Create API', () => {
+describe.only('Client Create API', () => {
 
 	const clients = ['foo', 'bar'];
 
 	const clientsToSave = clients.map(code => prepareFakeClient(code));
 
+	const SecretHandler = class SecretHandler {
+		getValue() {}
+	};
+
+	const stubGetSecret = (sandbox, value) => {
+
+		CredentialsFetcher.secretValue = undefined;
+
+		sandbox.stub(SecretHandler.prototype, 'getValue')
+			.resolves(value || {});
+
+		sandbox.stub(AwsSecretsManager, 'secret')
+			.returns(new SecretHandler());
+	};
+
+	const janisServiceName = 'some-service-name';
+	process.env.JANIS_SERVICE_NAME = janisServiceName;
+
 	APITest(APICreate, '/api/client', [
 		{
-			only: 1,
 			description: 'Should save all the received new clients to clients DB',
 			request: {
 				data: { clients }
@@ -34,6 +54,8 @@ describe('Client Create API', () => {
 
 				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
 
+				stubGetSecret(sandbox);
+
 				sandbox.stub(ModelClient.prototype, 'multiSave')
 					.resolves(true);
 
@@ -41,10 +63,64 @@ describe('Client Create API', () => {
 					.resolves();
 
 				sandbox.spy(APICreate.prototype, 'postSaveHook');
+
 			},
 			after: (res, sandbox) => {
 
+				sandbox.assert.calledOnceWithExactly(AwsSecretsManager.secret, janisServiceName);
+				sandbox.assert.calledOnceWithExactly(SecretHandler.prototype.getValue);
+
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
+
+				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
+
+				sandbox.assert.calledOnceWithExactly(
+					APICreate.prototype.postSaveHook,
+					clients
+				);
+
+				mockRequire.stop(fakeClientPath);
+			}
+		},
+		{
+			description: 'Should save clients after fetching database credentials',
+			request: {
+				data: { clients }
+			},
+			response: { code: 200 },
+			before: sandbox => {
+
+				mockRequire(fakeClientPath, ModelClient);
+
+				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+
+				stubGetSecret(sandbox, {
+					databases: {
+						secureDB: {
+							write: {
+								host: 'secure-host',
+								user: 'secure-user',
+								password: 'secure-password'
+							}
+						}
+					}
+				});
+
+				sandbox.stub(ModelClient.prototype, 'multiSave')
+					.resolves(true);
+
+				sandbox.stub(Invoker, 'call')
+					.resolves();
+
+				sandbox.spy(APICreate.prototype, 'postSaveHook');
+
+			},
+			after: (res, sandbox) => {
+
+				sandbox.assert.calledOnceWithExactly(AwsSecretsManager.secret, janisServiceName);
+				sandbox.assert.calledOnceWithExactly(SecretHandler.prototype.getValue);
+
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clients.map(code => prepareFakeClient(code, true)));
 
 				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
@@ -77,6 +153,7 @@ describe('Client Create API', () => {
 			after: (res, sandbox) => {
 
 				mockRequire.stop(fakeClientPath);
+
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
 				sandbox.assert.notCalled(Invoker.call);
 			}
