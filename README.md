@@ -12,16 +12,11 @@ This package includes all the generic functionality to create, update and remove
 npm install @janiscommerce/client-creator
 ```
 
-## Changes _Since `5.0.0`_
-- 🆙 Upgraded `@janiscommerce/model` up to `^5.0.0`
-- 🆙 Upgraded `@janiscommerce/mongodb-index-creator` up to `^2.0.0`
-- ⚠️ Removed `clientModelIndexes`, the indexes now are included in `ModelClient` ✅
-
 ## Configuration
 After installing this package you should create or update the following files:
 
 ### Service Settings
-You should configure the database config in your service for the new clients using the package [Settings](https://www.npmjs.com/package/@janiscommerce/settings) and the `newClientsDatabases`
+You should configure the database config in your service for the new clients using the package [Settings](https://www.npmjs.com/package/@janiscommerce/settings) and the `newClientsDatabases` field
 
 #### .janiscommercerc.json
 ```json
@@ -29,14 +24,11 @@ You should configure the database config in your service for the new clients usi
   "newClientsDatabases": {
     "default": { // DB config that the new clients will use
       "type": "mongodb",
-      "host": "clients-host",
       "database": "janis-{{code}}" // necessary to add dynamic database name. Since 3.0.0
-      // ...
     },
     "other-database": {
       "write": {
         "type": "solr",
-        "host": "host-solr",
         "database": "core-{{code}}"
       },
       "read": {
@@ -49,33 +41,109 @@ You should configure the database config in your service for the new clients usi
 }
 ```
 
-If we create a `foo` client with the previous settings, we will get the following client
+If we create a `brand-new-client` client with the previous settings, we will get the following client
 
 ```json
 {
-  "code": "foo",
+  "code": "brand-new-client",
   "databases": {
     "default": {
       "write": {
         "type": "mongodb",
-        "host": "clients-host",
-        "database": "janis-foo"
+        "database": "janis-brand-new-client"
       }
     },
     "other-database": {
       "write": {
         "type": "solr",
-        "host": "host-solr",
-        "database": "core-foo"
+        "database": "core-brand-new-client"
       },
       "read": {
         "type": "solr",
-        "host": "host-read-solr",
-        "database": "core-foo"
+        "database": "core-brand-new-client"
       }
     }
   },
   "status": "active"
+}
+```
+ 
+### 🔑 Secrets 
+The package will get the **secret** using the *JANIS_SERVICE_NAME* environment variable.  
+If the **secret** was found, the result will be merged with the settings found in the *`janiscommercerc.json`* in the `newClientsDatabases` field.
+
+The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) 
+
+<details>
+	<summary>Complete example in which the settings are obtained in the settings file and merged with the fetched credentials in AWS Secrets Manager.</summary>
+
+In the example will be used a new client **brand-new-client**.
+
+1. Settings in file.
+
+```json
+{
+  "newClientsDatabases": {
+    "default": {
+      "type": "mongodb",
+      "database": "janis-{{code}}"
+    }
+  }
+}
+```
+
+2. Secret fetched.
+
+```json
+{
+	"databases": {
+    "default": {
+      "write": {
+        "host": "mongodb+srv://some-host.mongodb.net",
+        "user": "secure-user",
+        "password": "secure-password",
+      }
+    }
+	}
+}
+```
+
+3. Settings merged after fetching the Secret
+
+```json
+{
+	"default": {
+		"write": {
+			"type": "mongodb",
+			"database": "janis-brand-new-client",
+			"host": "mongodb+srv://some-host.mongodb.net",
+			"user": "secure-user",
+			"password": "secure-password",
+		}
+	}
+}
+```
+
+</details>
+
+### Skip Credential Fetching
+
+To skip the fetch of the credentials, it can be used the setting `skipFetchCredentials` set as **true**.
+
+```json
+{
+  "newClientsDatabases": {
+    "default": {
+      "write": {
+        "type": "mongodb",
+        "skipFetchCredentials": true,
+        "protocol": "mongodb+srv://",
+        "host": "mongodb+srv://some-host.mongodb.net",
+        "user": "some-user",
+        "password": "insecure-password"
+      }
+    }
+  }
 }
 ```
 

@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [5.1.1] - 2021-02-105
+## [5.2.0] - 2021-03-26
+### Added
+- Fetched credentials in **AWS Secrets Manager** using `@janiscommerce/aws-secrets-manager`.
+
+## [5.1.1] - 2021-02-05
 ### Changed
 - API Create - Using Lambda.Invoker to create Indexes in MongoDB
 
