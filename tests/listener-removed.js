@@ -3,12 +3,13 @@
 const EventListenerTest = require('@janiscommerce/event-listener-test');
 const { ServerlessHandler } = require('@janiscommerce/event-listener');
 const Model = require('@janiscommerce/model');
-const mockRequire = require('mock-require');
-const path = require('path');
 
 const { ListenerRemoved, ModelClient } = require('../lib');
 
-const fakeClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'models', 'client');
+const {
+	mockModelClient,
+	stopMock
+} = require('./helpers/model-fetcher');
 
 const handler = (...args) => ServerlessHandler.handle(ListenerRemoved, ...args);
 
@@ -58,7 +59,8 @@ describe('Client Removed Listener', async () => {
 			description: 'Should return 404 when client model could not found the client',
 			event: validEvent,
 			before: sandbox => {
-				mockRequire(fakeClientPath, ModelClient);
+
+				mockModelClient();
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves(null);
 
@@ -73,7 +75,8 @@ describe('Client Removed Listener', async () => {
 				sandbox.assert.notCalled(Model.prototype.dropDatabase);
 				sandbox.assert.notCalled(ModelClient.prototype.remove);
 				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
-				mockRequire.stop(fakeClientPath);
+
+				stopMock();
 			},
 			responseCode: 404
 		},
@@ -81,7 +84,8 @@ describe('Client Removed Listener', async () => {
 			description: 'Should return 500 when client model fails getting the client',
 			event: validEvent,
 			before: sandbox => {
-				mockRequire(fakeClientPath, ModelClient);
+
+				mockModelClient();
 
 				sandbox.stub(ModelClient.prototype, 'getBy').rejects();
 
@@ -96,7 +100,8 @@ describe('Client Removed Listener', async () => {
 				sandbox.assert.notCalled(Model.prototype.dropDatabase);
 				sandbox.assert.notCalled(ModelClient.prototype.remove);
 				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
-				mockRequire.stop(fakeClientPath);
+
+				stopMock();
 			},
 			responseCode: 500
 		},
@@ -105,7 +110,8 @@ describe('Client Removed Listener', async () => {
 			event: validEvent,
 			before: sandbox => {
 
-				mockRequire(fakeClientPath, ModelClient);
+
+				mockModelClient();
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
 
@@ -117,7 +123,8 @@ describe('Client Removed Listener', async () => {
 				sandboxAssertGetBy(sandbox);
 				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
 				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
-				mockRequire.stop(fakeClientPath);
+
+				stopMock();
 			},
 			responseCode: 500
 		},
@@ -125,7 +132,8 @@ describe('Client Removed Listener', async () => {
 			description: 'Should return 500 when model default client fails removing the client',
 			event: validEvent,
 			before: sandbox => {
-				mockRequire(fakeClientPath, ModelClient);
+
+				mockModelClient();
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
 
@@ -140,7 +148,8 @@ describe('Client Removed Listener', async () => {
 				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
 				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
-				mockRequire.stop(fakeClientPath);
+
+				stopMock();
 			},
 			responseCode: 500
 		},
@@ -148,7 +157,8 @@ describe('Client Removed Listener', async () => {
 			description: 'Should return 200 when client was removed',
 			event: validEvent,
 			before: sandbox => {
-				mockRequire(fakeClientPath, ModelClient);
+
+				mockModelClient();
 
 				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
 
@@ -163,7 +173,8 @@ describe('Client Removed Listener', async () => {
 				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
 				sandbox.assert.calledOnceWithExactly(ListenerRemoved.prototype.postRemovedHook, client.code);
-				mockRequire.stop(fakeClientPath);
+
+				stopMock();
 			},
 			responseCode: 200
 		}

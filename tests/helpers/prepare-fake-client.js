@@ -1,10 +1,10 @@
 'use strict';
 
-const { ModelClient } = require('../lib');
+const { ModelClient } = require('../../lib');
 
-module.exports = (code, addSecureData = false) => ({
+module.exports = (code, addSecureData = false, addDB = true) => ({
 	code,
-	databases: {
+	databases: addDB ? {
 		default: {
 			write: {
 				skipFetchCredentials: true,
@@ -42,6 +42,6 @@ module.exports = (code, addSecureData = false) => ({
 				}
 			}
 		}
-	},
+	} : {},
 	status: ModelClient.statuses.active
 });

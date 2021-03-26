@@ -3,12 +3,13 @@
 const EventListenerTest = require('@janiscommerce/event-listener-test');
 const MicroserviceCall = require('@janiscommerce/microservice-call');
 const { ServerlessHandler } = require('@janiscommerce/event-listener');
-const mockRequire = require('mock-require');
-const path = require('path');
 
 const { ListenerUpdated, ModelClient } = require('../lib');
 
-const fakeClientPath = path.join(process.cwd(), process.env.MS_PATH || '', 'models', 'client');
+const {
+	mockModelClient,
+	stopMock
+} = require('./helpers/model-fetcher');
 
 const handler = (...args) => ServerlessHandler.handle(ListenerUpdated, ...args);
 
@@ -58,7 +59,8 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 500 when client model fails updating the status',
 				event: validEvent,
 				before: sandbox => {
-					mockRequire(fakeClientPath, ModelClient);
+
+					mockModelClient();
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall').resolves(msCall200);
 
@@ -75,7 +77,9 @@ describe('Client Updated Listener', async () => {
 					);
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.shouldRetry, msCall200);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
-					mockRequire.stop(fakeClientPath);
+
+					stopMock();
+
 				},
 				responseCode: 500
 			},
@@ -83,7 +87,8 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 500 and throw custom error when msCall fails to getting the client',
 				event: validEvent,
 				before: sandbox => {
-					mockRequire(fakeClientPath, ModelClient);
+
+					mockModelClient();
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
 						.resolves({ statusCode: 500, body: { message: 'Internal server error' } });
@@ -101,7 +106,9 @@ describe('Client Updated Listener', async () => {
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.shouldRetry, { statusCode: 500, body: { message: 'Internal server error' } });
 					sandbox.assert.notCalled(ModelClient.prototype.update);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
-					mockRequire.stop(fakeClientPath);
+
+					stopMock();
+
 				},
 				responseCode: 500
 			},
@@ -109,7 +116,8 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 500 and throw generic error when msCall fails to getting the client',
 				event: validEvent,
 				before: sandbox => {
-					mockRequire(fakeClientPath, ModelClient);
+
+					mockModelClient();
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
 						.resolves({ statusCode: 500, body: { } });
@@ -127,7 +135,9 @@ describe('Client Updated Listener', async () => {
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.shouldRetry, { statusCode: 500, body: { } });
 					sandbox.assert.notCalled(ModelClient.prototype.update);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
-					mockRequire.stop(fakeClientPath);
+
+					stopMock();
+
 				},
 				responseCode: 500
 			}
@@ -140,7 +150,8 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 200 and return when msCall gets 400 error',
 				event: validEvent,
 				before: sandbox => {
-					mockRequire(fakeClientPath, ModelClient);
+
+					mockModelClient();
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
 						.resolves({ statusCode: 400, body: {} });
@@ -158,7 +169,9 @@ describe('Client Updated Listener', async () => {
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.shouldRetry, { statusCode: 400, body: {} });
 					sandbox.assert.notCalled(ModelClient.prototype.update);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
-					mockRequire.stop(fakeClientPath);
+
+					stopMock();
+
 				},
 				responseCode: 200
 			},
@@ -166,7 +179,8 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 200 and return when msCall could not find the client',
 				event: validEvent,
 				before: sandbox => {
-					mockRequire(fakeClientPath, ModelClient);
+
+					mockModelClient();
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
 						.resolves({ statusCode: 404, body: { message: 'Internal server error' } });
@@ -184,7 +198,9 @@ describe('Client Updated Listener', async () => {
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.shouldRetry, { statusCode: 404, body: { message: 'Internal server error' } });
 					sandbox.assert.notCalled(ModelClient.prototype.update);
 					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
-					mockRequire.stop(fakeClientPath);
+
+					stopMock();
+
 				},
 				responseCode: 200
 			},
@@ -192,7 +208,8 @@ describe('Client Updated Listener', async () => {
 				description: 'Should return 200 when client model updates the client status',
 				event: validEvent,
 				before: sandbox => {
-					mockRequire(fakeClientPath, ModelClient);
+
+					mockModelClient();
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
 						.resolves(msCall200);
@@ -211,7 +228,9 @@ describe('Client Updated Listener', async () => {
 					);
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.shouldRetry, msCall200);
 					sandbox.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, client);
-					mockRequire.stop(fakeClientPath);
+
+					stopMock();
+
 				},
 				responseCode: 200
 			}
