@@ -21,6 +21,7 @@ const {
 	stopMock
 } = require('./helpers/model-fetcher');
 
+const ClientFormatter = require('../lib/helpers/client-formatter');
 
 const fakeDBSettings = require('./helpers/fake-db-settings');
 const prepareFakeClient = require('./helpers/prepare-fake-client');
@@ -42,6 +43,8 @@ describe('Client Create API', () => {
 			},
 			response: { code: 200 },
 			before: sandbox => {
+
+				delete ClientFormatter.settings;
 
 				mockModelClient();
 
@@ -83,6 +86,8 @@ describe('Client Create API', () => {
 			response: { code: 200 },
 			before: sandbox => {
 
+				delete ClientFormatter.settings;
+
 				mockModelClient();
 
 				sandbox.stub(Settings, 'get')
@@ -123,6 +128,8 @@ describe('Client Create API', () => {
 			},
 			response: { code: 200 },
 			before: sandbox => {
+
+				delete ClientFormatter.settings;
 
 				mockModelClient();
 
@@ -167,6 +174,8 @@ describe('Client Create API', () => {
 			response: { code: 200 },
 			before: sandbox => {
 
+				delete ClientFormatter.settings;
+
 				mockModelClient();
 
 				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
@@ -200,6 +209,8 @@ describe('Client Create API', () => {
 			response: { code: 200 },
 			before: sandbox => {
 
+				delete ClientFormatter.settings;
+
 				mockModelClient();
 
 				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
@@ -230,6 +241,8 @@ describe('Client Create API', () => {
 			},
 			response: { code: 200 },
 			before: sandbox => {
+
+				delete ClientFormatter.settings;
 
 				mockModelClient();
 
@@ -262,6 +275,8 @@ describe('Client Create API', () => {
 			response: { code: 500 },
 			before: sandbox => {
 
+				delete ClientFormatter.settings;
+
 				mockModelClient();
 
 				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
@@ -292,6 +307,8 @@ describe('Client Create API', () => {
 			},
 			response: { code: 500 },
 			before: sandbox => {
+
+				delete ClientFormatter.settings;
 
 				mockModelClient();
 
@@ -345,6 +362,8 @@ describe('Client Create API', () => {
 				code: 500
 			},
 			before: sandbox => {
+
+				delete ClientFormatter.settings;
 
 				wrongMockModelClient();
 

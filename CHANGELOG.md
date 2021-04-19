@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.2.1] - 2021-04-19
+### Added
+- Public method `formatForCreate` to formatting
+
 ## [5.2.0] - 2021-03-26
 ### Added
 - Fetched credentials in **AWS Secrets Manager** using `@janiscommerce/aws-secrets-manager`.

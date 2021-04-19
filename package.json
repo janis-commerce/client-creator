@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/client-creator",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "description": "A package that wraps all the client creation in Janis Services",
   "main": "lib/index.js",
   "scripts": {
@@ -27,7 +27,7 @@
     "@janiscommerce/event-listener-test": "^3.0.0",
     "eslint-config-airbnb-base": "^13.2.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint": "^7.22.0",
+    "eslint": "^7.24.0",
     "husky": "^4.3.8",
     "mocha": "^8.3.2",
     "mock-require": "^3.0.3",
@@ -45,10 +45,11 @@
     "@janiscommerce/api-session": "^3.1.1",
     "@janiscommerce/aws-secrets-manager": "^0.2.0",
     "@janiscommerce/event-listener": "^3.0.0",
-    "@janiscommerce/lambda": "^3.1.0",
-    "@janiscommerce/microservice-call": "^4.2.0",
-    "@janiscommerce/model": "^5.4.0",
+    "@janiscommerce/lambda": "^3.2.0",
+    "@janiscommerce/microservice-call": "^4.3.1",
+    "@janiscommerce/model": "^5.5.0",
     "@janiscommerce/mongodb-index-creator": "^2.3.0",
-    "@janiscommerce/settings": "^1.0.1"
+    "@janiscommerce/settings": "^1.0.1",
+    "@janiscommerce/superstruct": "^1.2.0"
   }
 }
