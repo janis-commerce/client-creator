@@ -63,7 +63,7 @@ describe('Client Created Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
+				sandbox.stub(ModelClient.prototype, 'save')
 					.rejects();
 
 				stubSettings(sandbox);
@@ -79,7 +79,7 @@ describe('Client Created Listener', async () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [prepareFakeClient(validEvent.id)]);
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
 				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
 
 				stopMock();
@@ -96,7 +96,7 @@ describe('Client Created Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
+				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves();
 
 				stubSettings(sandbox);
@@ -112,7 +112,7 @@ describe('Client Created Listener', async () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [prepareFakeClient(validEvent.id)]);
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
 				sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientCode);
 
 				stopMock();
@@ -129,7 +129,7 @@ describe('Client Created Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
+				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves('5dea9fc691240d00084083f9');
 
 				stubSettings(sandbox);
@@ -147,7 +147,7 @@ describe('Client Created Listener', async () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [prepareFakeClient(validEvent.id)]);
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
 				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
 
@@ -165,7 +165,7 @@ describe('Client Created Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
+				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves('5dea9fc691240d00084083f9');
 
 				stubSettings(sandbox);
@@ -191,7 +191,7 @@ describe('Client Created Listener', async () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [prepareFakeClient(validEvent.id, true)]);
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id, true));
 
 				stopMock();
 
@@ -206,7 +206,7 @@ describe('Client Created Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
+				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves('5dea9fc691240d00084083f9');
 
 				stubSettings(sandbox);
@@ -222,7 +222,7 @@ describe('Client Created Listener', async () => {
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [prepareFakeClient(validEvent.id)]);
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
 				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
 
@@ -239,7 +239,7 @@ describe('Client Created Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
+				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves('5dea9fc691240d00084083f9');
 
 				stubSettings(sandbox);
@@ -255,7 +255,7 @@ describe('Client Created Listener', async () => {
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [prepareFakeClient(validEvent.id)]);
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
 				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
 
@@ -272,7 +272,7 @@ describe('Client Created Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
+				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves('5dea9fc691240d00084083f9');
 
 				sandbox.stub(Settings, 'get')
@@ -291,7 +291,7 @@ describe('Client Created Listener', async () => {
 
 				secretsNotCalled(sandbox);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [prepareFakeClient(validEvent.id, false, false)]);
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id, false, false));
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
 				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
 
@@ -308,7 +308,7 @@ describe('Client Created Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
+				sandbox.stub(ModelClient.prototype, 'save')
 					.resolves('5dea9fc691240d00084083f9');
 
 				const { secureDB, ...noSecureSettings } = fakeDBSettings;
@@ -332,7 +332,7 @@ describe('Client Created Listener', async () => {
 				const preparedClient = prepareFakeClient(validEvent.id);
 				delete preparedClient.databases.secureDB;
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [preparedClient]);
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, preparedClient);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
 				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
 
