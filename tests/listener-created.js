@@ -26,7 +26,7 @@ const {
 	stopMock
 } = require('./helpers/model-fetcher');
 
-const handler = (...args) => ServerlessHandler.handle(ListenerCreated, ...args);
+const ClientCreated = (...args) => ServerlessHandler.handle(ListenerCreated, ...args);
 
 describe('Client Created Listener', async () => {
 
@@ -45,7 +45,7 @@ describe('Client Created Listener', async () => {
 	const janisServiceName = 'some-service-name';
 	process.env.JANIS_SERVICE_NAME = janisServiceName;
 
-	await EventListenerTest(handler, [
+	await EventListenerTest(ClientCreated, [
 		{
 			description: 'Should return 400 when the event has no ID',
 			event: {

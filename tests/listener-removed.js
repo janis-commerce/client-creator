@@ -11,7 +11,7 @@ const {
 	stopMock
 } = require('./helpers/model-fetcher');
 
-const handler = (...args) => ServerlessHandler.handle(ListenerRemoved, ...args);
+const ClientRemoved = (...args) => ServerlessHandler.handle(ListenerRemoved, ...args);
 
 describe('Client Removed Listener', async () => {
 
@@ -36,22 +36,22 @@ describe('Client Removed Listener', async () => {
 	};
 
 	const validEvent = {
-		client: client.code,
 		service: 'id',
 		entity: 'client',
-		event: 'removed'
+		event: 'removed',
+		id: client.code
 	};
 
 	const sandboxAssertGetBy = sandbox => {
 		sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code, { unique: true });
 	};
 
-	await EventListenerTest(handler, [
+	await EventListenerTest(ClientRemoved, [
 		{
-			description: 'Should return 400 when the event has no client',
+			description: 'Should return 400 when the event has no id with clientCode',
 			event: {
 				...validEvent,
-				client: undefined
+				id: undefined
 			},
 			responseCode: 400
 		},

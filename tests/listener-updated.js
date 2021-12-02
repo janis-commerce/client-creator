@@ -11,7 +11,7 @@ const {
 	stopMock
 } = require('./helpers/model-fetcher');
 
-const handler = (...args) => ServerlessHandler.handle(ListenerUpdated, ...args);
+const ClientUpdated = (...args) => ServerlessHandler.handle(ListenerUpdated, ...args);
 
 describe('Client Updated Listener', async () => {
 
@@ -46,7 +46,7 @@ describe('Client Updated Listener', async () => {
 
 	const id = { id: validEvent.id };
 	describe('Errors', async () => {
-		await EventListenerTest(handler, [
+		await EventListenerTest(ClientUpdated, [
 			{
 				description: 'Should return 400 when the event has no ID',
 				event: {
@@ -145,7 +145,7 @@ describe('Client Updated Listener', async () => {
 	});
 
 	describe('200 response', async () => {
-		await EventListenerTest(handler, [
+		await EventListenerTest(ClientUpdated, [
 			{
 				description: 'Should return 200 and return when msCall gets 400 error',
 				event: validEvent,
