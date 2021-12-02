@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.2.5] - 2021-12-02
+### Fixed
+- `RemovedListener` using ApiSession to make `dropDatabase()` possible
+
 ## [5.2.4] - 2021-12-02
 ### Fixed
 - Now `RemovedListener` uses `event.id` instead of `event.client`

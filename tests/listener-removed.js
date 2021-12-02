@@ -113,7 +113,7 @@ describe('Client Removed Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
+				sandbox.stub(ModelClient.prototype, 'getBy').resolves(client);
 
 				sandbox.stub(Model.prototype, 'dropDatabase').rejects();
 
@@ -135,7 +135,7 @@ describe('Client Removed Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
+				sandbox.stub(ModelClient.prototype, 'getBy').resolves(client);
 
 				sandbox.stub(Model.prototype, 'dropDatabase').resolves(true);
 
@@ -160,7 +160,7 @@ describe('Client Removed Listener', async () => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'getBy').resolves([client]);
+				sandbox.stub(ModelClient.prototype, 'getBy').resolves(client);
 
 				sandbox.stub(Model.prototype, 'dropDatabase').resolves(true);
 
