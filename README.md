@@ -311,6 +311,7 @@ Receives the clientCodes from the API.
 
 Parameters:
 - clientCodes `string Array`: The client created codes.
+- clients `object Array`: The clients created objects that were saved.
 
 ##### Example
 ```js
@@ -319,12 +320,16 @@ const { APICreate } = require('@janiscommerce/client-creator');
 
 class ClientCreateAPI extends APICreate {
 
-  async postSaveHook(clientCodes) {
+  async postSaveHook(clientCodes, clients) {
 
       await myPostSaveMethod(clientCodes);
 
       clientCodes.forEach(clientCode => {
           console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
+      })
+
+      clients.forEach(({ databases, status }) => {
+        console.log(`This epic client has ${databases.length} databases and its status is ${status}`)
       })
     }
 }
@@ -333,11 +338,12 @@ module.exports = ClientCreateAPI;
 ```
 
 #### Listener Created   
-#### `postSaveHook(clientCode)`
+#### `postSaveHook(clientCode, client)`
 Receives the clientCode from the event.
 
 Parameters:
-- clientCode `string`: The client created code.gs of the created client.
+- clientCode `string`: The client created code of the created client.
+- client `object`: The client created object that was saved.
 
 It can be implemented as the example bellow:
 ##### Example
@@ -348,8 +354,9 @@ const { ListenerCreated } = require('@janiscommerce/client-creator');
 
 class ClientCreateListener extends ListenerCreated {
 
-  async postSaveHook(clientCode) {
+  async postSaveHook(clientCode, client) {
     console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
+    console.log(`Saved client has ${client.databases.length} databases! Whoaaa`)
   }
 }
 
