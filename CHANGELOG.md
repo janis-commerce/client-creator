@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `additionalFields` getter in **ModelClient** for customizing client fields
 
 ## [5.2.5] - 2021-12-02
 ### Fixed

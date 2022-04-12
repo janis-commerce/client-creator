@@ -1,8 +1,12 @@
 'use strict';
 
+require('lllog')('none');
+
 const EventListenerTest = require('@janiscommerce/event-listener-test');
 const MongoDBIndexCreator = require('@janiscommerce/mongodb-index-creator');
+const MicroserviceCall = require('@janiscommerce/microservice-call');
 const Settings = require('@janiscommerce/settings');
+
 const { ServerlessHandler } = require('@janiscommerce/event-listener');
 
 const { ListenerCreated, ModelClient } = require('../lib');
@@ -42,6 +46,8 @@ describe('Client Created Listener', async () => {
 			.returns(fakeDBSettings);
 	};
 
+	const fakeClient = prepareFakeClient(validEvent.id);
+
 	const janisServiceName = 'some-service-name';
 	process.env.JANIS_SERVICE_NAME = janisServiceName;
 
@@ -61,6 +67,10 @@ describe('Client Created Listener', async () => {
 
 				delete ClientFormatter.settings;
 
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [fakeClient] });
+
 				mockModelClient();
 
 				sandbox.stub(ModelClient.prototype, 'save')
@@ -79,7 +89,8 @@ describe('Client Created Listener', async () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
 				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
 
 				stopMock();
@@ -94,6 +105,10 @@ describe('Client Created Listener', async () => {
 
 				delete ClientFormatter.settings;
 
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [fakeClient] });
+
 				mockModelClient();
 
 				sandbox.stub(ModelClient.prototype, 'save')
@@ -112,7 +127,8 @@ describe('Client Created Listener', async () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
 				sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientCode);
 
 				stopMock();
@@ -126,6 +142,10 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [fakeClient] });
 
 				mockModelClient();
 
@@ -147,9 +167,10 @@ describe('Client Created Listener', async () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
+				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
 
 				stopMock();
 
@@ -157,11 +178,253 @@ describe('Client Created Listener', async () => {
 			responseCode: 200
 		},
 		{
+			description: 'Should return 200 when client model saves the new client successfully with additional fields',
+			event: validEvent,
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				sandbox.stub(ModelClient, 'additionalFields')
+					.get(() => ['extraField']);
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [{ ...fakeClient, extraField: 'some-data', randomField: 'foobar' }] });
+
+				mockModelClient();
+
+				sandbox.stub(ModelClient.prototype, 'save')
+					.resolves('5dea9fc691240d00084083f9');
+
+				stubSettings(sandbox);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+					.resolves();
+
+				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+			},
+			after: sandbox => {
+
+				assertSecretsGet(sandbox, janisServiceName);
+
+				const expectedClientToSave = { ...fakeClient, extraField: 'some-data' };
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, expectedClientToSave);
+				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
+				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, expectedClientToSave);
+
+				stopMock();
+
+			},
+			responseCode: 200
+		},
+		{
+			description: 'Should return 200 when MicroserviceCall can\'t get the client from ID service',
+			event: validEvent,
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 400, body: {} });
+
+				mockModelClient();
+
+				sandbox.spy(ModelClient.prototype, 'save');
+
+				stubSettings(sandbox);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
+				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+			},
+			after: sandbox => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.notCalled(ModelClient.prototype.save);
+				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
+				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+
+				stopMock();
+
+			},
+			responseCode: 200
+		},
+		{
+			description: 'Should return 200 when MicroserviceCall don\'t any client from ID service',
+			event: validEvent,
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [] });
+
+				mockModelClient();
+
+				sandbox.spy(ModelClient.prototype, 'save');
+
+				stubSettings(sandbox);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
+				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+			},
+			after: sandbox => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.notCalled(ModelClient.prototype.save);
+				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
+				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+
+				stopMock();
+
+			},
+			responseCode: 200
+		},
+		{
+			description: 'Should return 500 when MicroserviceCall fails to get the client from ID service',
+			event: validEvent,
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 500, body: {} });
+
+				mockModelClient();
+
+				sandbox.spy(ModelClient.prototype, 'save');
+
+				stubSettings(sandbox);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
+				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+			},
+			after: sandbox => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.notCalled(ModelClient.prototype.save);
+				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
+				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+
+				stopMock();
+
+			},
+			responseCode: 500
+		},
+		{
+			description: 'Should return 500 when MicroserviceCall fails to get the client from ID service with API Error message',
+			event: validEvent,
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 500, body: { message: 'Some API Error' } });
+
+				mockModelClient();
+
+				sandbox.spy(ModelClient.prototype, 'save');
+
+				stubSettings(sandbox);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
+				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+			},
+			after: sandbox => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.notCalled(ModelClient.prototype.save);
+				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
+				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+
+				stopMock();
+
+			},
+			responseCode: 500
+		},
+		{
+			description: 'Should return 500 when additional fields getter is invalid',
+			event: validEvent,
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [{ ...fakeClient, extraField: 'some-data', randomField: 'foobar' }] });
+
+				mockModelClient();
+
+				sandbox.stub(ModelClient, 'additionalFields')
+					.get(() => 'not an array');
+
+				stubSettings(sandbox);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.spy(ModelClient.prototype, 'save');
+				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
+				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+			},
+			after: sandbox => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.notCalled(ModelClient.prototype.save);
+				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
+				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+
+				stopMock();
+
+			},
+			responseCode: 500
+		},
+		{
 			description: 'Should return 200 when client model saves the new client successfully after fetching credentials',
 			event: validEvent,
 			before: sandbox => {
 
 				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [fakeClient] });
 
 				mockModelClient();
 
@@ -191,6 +454,7 @@ describe('Client Created Listener', async () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id, true));
 
 				stopMock();
@@ -203,6 +467,10 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [fakeClient] });
 
 				mockModelClient();
 
@@ -222,9 +490,10 @@ describe('Client Created Listener', async () => {
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
+				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
 
 				stopMock();
 
@@ -236,6 +505,10 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [fakeClient] });
 
 				mockModelClient();
 
@@ -255,9 +528,10 @@ describe('Client Created Listener', async () => {
 			},
 			after: sandbox => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id));
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
+				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
 
 				stopMock();
 
@@ -269,6 +543,10 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [fakeClient] });
 
 				mockModelClient();
 
@@ -291,9 +569,12 @@ describe('Client Created Listener', async () => {
 
 				secretsNotCalled(sandbox);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id, false, false));
+				const expectedSavedClient = prepareFakeClient(validEvent.id, false, false);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, expectedSavedClient);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
+				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, expectedSavedClient);
 
 				stopMock();
 
@@ -305,6 +586,10 @@ describe('Client Created Listener', async () => {
 			before: sandbox => {
 
 				delete ClientFormatter.settings;
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
+					.resolves({ statusCode: 200, body: [fakeClient] });
 
 				mockModelClient();
 
@@ -332,9 +617,10 @@ describe('Client Created Listener', async () => {
 				const preparedClient = prepareFakeClient(validEvent.id);
 				delete preparedClient.databases.secureDB;
 
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, preparedClient);
 				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id);
+				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, preparedClient);
 
 				stopMock();
 

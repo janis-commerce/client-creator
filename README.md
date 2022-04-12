@@ -147,7 +147,7 @@ To skip the fetch of the credentials, it can be used the setting `skipFetchCrede
 }
 ```
 
-### ClientModel
+### :sparkles::new::sparkles: ClientModel
 At `./[MS_PATH]/models/client.js`
 
 ```js
@@ -155,6 +155,50 @@ At `./[MS_PATH]/models/client.js`
 const { ModelClient } = require('@janiscommerce/client-creator');
 
 module.exports = ModelClient;
+```
+
+:new: **Additional Fields**  
+Additional fields is a *getter* that allows the service to customize the clients fields, this is useful when a service needs their own custom data in clients.
+
+> #### :information_source: This will affect Client Created API and EventListener and also Client Updated EventListener behavior
+> When a client is created or modified, the current client will be obtained from ID service and **only the additional fields that exist in the getter** will be saved in the service along with the basic client fields.
+
+#### Example:
+```js
+'use strict';
+const { ModelClient } = require('@janiscommerce/client-creator');
+
+module.exports = class MyModelClient extends ModelClient {
+
+  static get additionalFields() {
+
+    return [
+      'myAdditionalField',
+      'anotherAdditionalField'
+    ]
+  }
+};
+```
+
+#### If a new client is created with these additional fields:
+```json
+{
+  "name": "Some Client",
+  "code": "some-client",
+  "myAdditionalField": "some-additional-data",
+  "anotherAdditionalField": "another-additional-data",
+  "unusedAdditionalField": "unused-data"
+}
+```
+
+#### The client will be saved in the service with only the specified additional fields:
+```json
+{
+  "name": "Some Client",
+  "code": "some-client",
+  "myAdditionalField": "some-additional-data",
+  "anotherAdditionalField": "another-additional-data"
+}
 ```
 
 ### APICreate
