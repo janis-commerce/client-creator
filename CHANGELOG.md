@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - `additionalFields` getter in **ModelClient** for customizing client fields
+- **API Client Created** and **EventListener Client Created** `postSaveHook()` receives the created client object in second parameter.
 
 ## [5.2.5] - 2021-12-02
 ### Fixed
