@@ -306,8 +306,8 @@ The `APICreate` and `listeners` have a hook for post processing the client or cl
 
 #### APICreate
 
-#### `postSaveHook(clientCodes)`
-Receives the clientCodes from the API.
+#### `postSaveHook(clientCodes, clients)`
+Receives the clientCodes and clients from the API.
 
 Parameters:
 - clientCodes `string Array`: The client created codes.
@@ -339,7 +339,7 @@ module.exports = ClientCreateAPI;
 
 #### Listener Created   
 #### `postSaveHook(clientCode, client)`
-Receives the clientCode from the event.
+Receives the clientCode and client from the event.
 
 Parameters:
 - clientCode `string`: The client created code of the created client.
