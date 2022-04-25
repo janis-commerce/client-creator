@@ -379,10 +379,6 @@ describe('Client Created Listener', async () => {
 
 				delete ClientFormatter.settings;
 
-				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 })
-					.resolves({ statusCode: 200, body: [{ ...fakeClient, extraField: 'some-data', randomField: 'foobar' }] });
-
 				mockModelClient();
 
 				sandbox.stub(ModelClient, 'additionalFields')
@@ -394,6 +390,7 @@ describe('Client Created Listener', async () => {
 
 				stubGetSecret(sandbox);
 
+				sandbox.spy(MicroserviceCall.prototype, 'safeList');
 				sandbox.spy(ModelClient.prototype, 'save');
 				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
 				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
@@ -402,7 +399,7 @@ describe('Client Created Listener', async () => {
 
 				secretsNotCalled(sandbox);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: validEvent.id }, limit: 1 });
+				sandbox.assert.notCalled(MicroserviceCall.prototype.safeList);
 				sandbox.assert.notCalled(ModelClient.prototype.save);
 				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
 				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
