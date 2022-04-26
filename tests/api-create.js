@@ -106,7 +106,7 @@ describe('Client Create API', () => {
 				stubGetSecret(sandbox);
 
 				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: clients } })
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
 					.resolves({ statusCode: 200, body: clientsToSaveWithAdditionalFields });
 
 				sandbox.stub(ModelClient.prototype, 'multiSave')
@@ -122,7 +122,11 @@ describe('Client Create API', () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: clients } });
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSaveWithAdditionalFields);
 				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
@@ -348,7 +352,7 @@ describe('Client Create API', () => {
 				stubGetSecret(sandbox);
 
 				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: clients } })
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
 					.resolves({ statusCode: 400, body: {} });
 
 				sandbox.spy(ModelClient.prototype, 'multiSave');
@@ -360,7 +364,11 @@ describe('Client Create API', () => {
 
 				secretsNotCalled(sandbox);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: clients } });
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
 				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
 				sandbox.assert.notCalled(Invoker.call);
 				sandbox.assert.notCalled(APICreate.prototype.postSaveHook);
@@ -389,7 +397,7 @@ describe('Client Create API', () => {
 				stubGetSecret(sandbox);
 
 				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: clients } })
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
 					.resolves({ statusCode: 200, body: [clientsToSave[0]] });
 
 				sandbox.stub(ModelClient.prototype, 'multiSave')
@@ -405,7 +413,11 @@ describe('Client Create API', () => {
 
 				assertSecretsGet(sandbox, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: clients } });
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [clientsToSave[0]]);
 				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
@@ -439,7 +451,7 @@ describe('Client Create API', () => {
 				stubGetSecret(sandbox);
 
 				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: clients } })
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
 					.resolves({ statusCode: 200, body: [] });
 
 				sandbox.spy(ModelClient.prototype, 'multiSave');
@@ -451,7 +463,11 @@ describe('Client Create API', () => {
 
 				secretsNotCalled(sandbox);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: clients } });
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
 				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
 				sandbox.assert.notCalled(Invoker.call);
 				sandbox.assert.notCalled(APICreate.prototype.postSaveHook);
@@ -480,7 +496,7 @@ describe('Client Create API', () => {
 				stubGetSecret(sandbox);
 
 				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: clients } })
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
 					.resolves({ statusCode: 500, body: {} });
 
 				sandbox.spy(ModelClient.prototype, 'multiSave');
@@ -492,7 +508,11 @@ describe('Client Create API', () => {
 
 				secretsNotCalled(sandbox);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: clients } });
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
 				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
 				sandbox.assert.notCalled(Invoker.call);
 				sandbox.assert.notCalled(APICreate.prototype.postSaveHook);
@@ -521,7 +541,7 @@ describe('Client Create API', () => {
 				stubGetSecret(sandbox);
 
 				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: clients } })
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
 					.resolves({ statusCode: 500, body: { message: 'Some API Error' } });
 
 				sandbox.spy(ModelClient.prototype, 'multiSave');
@@ -533,7 +553,11 @@ describe('Client Create API', () => {
 
 				secretsNotCalled(sandbox);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: clients } });
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
 				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
 				sandbox.assert.notCalled(Invoker.call);
 				sandbox.assert.notCalled(APICreate.prototype.postSaveHook);
