@@ -249,10 +249,18 @@ describe('Client Updated Listener', async () => {
 					mockModelClient();
 
 					sandbox.stub(ModelClient, 'additionalFields')
-						.get(() => ['extraField']);
+						.get(() => ['extraField', 'anotherExtraField']);
 
 					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves({ statusCode: 200, body: { ...client, extraField: 'some-data', randomField: 'other-data' } });
+						.resolves({
+							statusCode: 200,
+							body: {
+								...client,
+								extraField: 'some-data',
+								anotherExtraField: 0,
+								randomField: 'other-data'
+							}
+						});
 
 					sandbox.stub(ModelClient.prototype, 'update')
 						.resolves(true);
@@ -261,9 +269,11 @@ describe('Client Updated Listener', async () => {
 				},
 				after: sandbox => {
 
-					sandbox.assert.calledOnceWithExactly(ModelClient.prototype.update, { extraField: 'some-data', status: client.status }, { code: client.code });
+					const clientFieldsToUpdate = { extraField: 'some-data', anotherExtraField: 0 };
+
+					sandbox.assert.calledOnceWithExactly(ModelClient.prototype.update, { ...clientFieldsToUpdate, status: client.status }, { code: client.code });
 					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, { ...client, extraField: 'some-data', randomField: 'other-data' });
+					sandbox.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, { ...client, ...clientFieldsToUpdate, randomField: 'other-data' });
 
 					stopMock();
 

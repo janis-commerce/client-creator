@@ -35,7 +35,11 @@ describe('Client Create API', () => {
 	const clients = ['foo', 'bar'];
 
 	const clientsToSave = clients.map(code => prepareFakeClient(code));
-	const clientsToSaveWithAdditionalFields = clientsToSave.map(client => ({ ...client, extraField: 'some-data' }));
+
+	const clientsToSaveWithAdditionalFields = [
+		{ ...clientsToSave[0], extraField: 'some-data' },
+		{ ...clientsToSave[1], extraField: 0 }
+	];
 
 	const janisServiceName = 'some-service-name';
 	process.env.JANIS_SERVICE_NAME = janisServiceName;
