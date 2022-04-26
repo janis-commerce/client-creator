@@ -1,8 +1,12 @@
 'use strict';
 
+require('lllog')('none');
+
 const APITest = require('@janiscommerce/api-test');
-const { Invoker } = require('@janiscommerce/lambda');
 const Settings = require('@janiscommerce/settings');
+const MicroserviceCall = require('@janiscommerce/microservice-call');
+
+const { Invoker } = require('@janiscommerce/lambda');
 
 const { APICreate, ModelClient } = require('../lib');
 
@@ -31,6 +35,11 @@ describe('Client Create API', () => {
 	const clients = ['foo', 'bar'];
 
 	const clientsToSave = clients.map(code => prepareFakeClient(code));
+
+	const clientsToSaveWithAdditionalFields = [
+		{ ...clientsToSave[0], extraField: 'some-data' },
+		{ ...clientsToSave[1], extraField: 0 }
+	];
 
 	const janisServiceName = 'some-service-name';
 	process.env.JANIS_SERVICE_NAME = janisServiceName;
@@ -68,17 +77,73 @@ describe('Client Create API', () => {
 				assertSecretsGet(sandbox, janisServiceName);
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
-
 				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
 				sandbox.assert.calledOnceWithExactly(
 					APICreate.prototype.postSaveHook,
-					clients
+					clients,
+					clientsToSave
 				);
 
 				stopMock();
 			}
-		}, {
+		},
+		{
+			description: 'Should save all the received new clients to clients DB including additional fields',
+			request: {
+				data: { clients }
+			},
+			response: { code: 200 },
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				mockModelClient();
+
+				sandbox.stub(ModelClient, 'additionalFields')
+					.get(() => ['extraField']);
+
+				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
+					.resolves({ statusCode: 200, body: clientsToSaveWithAdditionalFields });
+
+				sandbox.stub(ModelClient.prototype, 'multiSave')
+					.resolves(true);
+
+				sandbox.stub(Invoker, 'call')
+					.resolves();
+
+				sandbox.spy(APICreate.prototype, 'postSaveHook');
+
+			},
+			after: (res, sandbox) => {
+
+				assertSecretsGet(sandbox, janisServiceName);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSaveWithAdditionalFields);
+				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
+
+				sandbox.assert.calledOnceWithExactly(
+					APICreate.prototype.postSaveHook,
+					clients,
+					clientsToSaveWithAdditionalFields
+				);
+
+				stopMock();
+			}
+		},
+		{
 			description: 'Should save all the received new clients to clients DB when no settings found in file',
 			request: {
 				data: { clients }
@@ -110,18 +175,21 @@ describe('Client Create API', () => {
 
 				secretsNotCalled(sandbox);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clients.map(code => prepareFakeClient(code, false, false)));
+				const expectedClientsToSave = clients.map(code => prepareFakeClient(code, false, false));
 
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, expectedClientsToSave);
 				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
 				sandbox.assert.calledOnceWithExactly(
 					APICreate.prototype.postSaveHook,
-					clients
+					clients,
+					expectedClientsToSave
 				);
 
 				stopMock();
 			}
-		}, {
+		},
+		{
 			description: 'Should save clients after fetching database credentials',
 			request: {
 				data: { clients }
@@ -166,7 +234,8 @@ describe('Client Create API', () => {
 
 				stopMock();
 			}
-		}, {
+		},
+		{
 			description: 'Should skip fetching credentials if environment is local',
 			request: {
 				data: { clients }
@@ -198,10 +267,10 @@ describe('Client Create API', () => {
 				secretsNotCalled(sandbox);
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
-
 				stopMock();
 			}
-		}, {
+		},
+		{
 			description: 'Should save clients when SecretsManager throws an Error',
 			request: {
 				data: { clients }
@@ -229,12 +298,11 @@ describe('Client Create API', () => {
 
 			},
 			after: (res, sandbox) => {
-
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
-
 				stopMock();
 			}
-		}, {
+		},
+		{
 			description: 'Should save clients when SecretsManager getValue rejects',
 			request: {
 				data: { clients }
@@ -262,8 +330,241 @@ describe('Client Create API', () => {
 
 			},
 			after: (res, sandbox) => {
-
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
+				stopMock();
+			}
+		},
+		{
+			description: 'Should return 200 when MicroserviceCall can\'t get clients from ID Service',
+			request: {
+				data: { clients }
+			},
+			response: { code: 200 },
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				mockModelClient();
+
+				sandbox.stub(ModelClient, 'additionalFields')
+					.get(() => ['extraField']);
+
+				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
+					.resolves({ statusCode: 400, body: {} });
+
+				sandbox.spy(ModelClient.prototype, 'multiSave');
+				sandbox.spy(Invoker, 'call');
+				sandbox.spy(APICreate.prototype, 'postSaveHook');
+
+			},
+			after: (res, sandbox) => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
+				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
+				sandbox.assert.notCalled(Invoker.call);
+				sandbox.assert.notCalled(APICreate.prototype.postSaveHook);
+
+				stopMock();
+			}
+		}, {
+			description: 'Should save only found clients when can\'t get all clients from ID service',
+			request: {
+				data: { clients }
+			},
+			response: { code: 200 },
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				mockModelClient();
+
+				sandbox.stub(ModelClient, 'additionalFields')
+					.get(() => ['extraField']);
+
+				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
+					.resolves({ statusCode: 200, body: [clientsToSave[0]] });
+
+				sandbox.stub(ModelClient.prototype, 'multiSave')
+					.resolves(true);
+
+				sandbox.stub(Invoker, 'call')
+					.resolves();
+
+				sandbox.spy(APICreate.prototype, 'postSaveHook');
+
+			},
+			after: (res, sandbox) => {
+
+				assertSecretsGet(sandbox, janisServiceName);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
+				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [clientsToSave[0]]);
+				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
+
+				sandbox.assert.calledOnceWithExactly(
+					APICreate.prototype.postSaveHook,
+					clients,
+					[clientsToSave[0]]
+				);
+
+				stopMock();
+			}
+		}, {
+			description: 'Should return 200 when MicroserviceCall don\'t get any clients from ID Service',
+			request: {
+				data: { clients }
+			},
+			response: { code: 200 },
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				mockModelClient();
+
+				sandbox.stub(ModelClient, 'additionalFields')
+					.get(() => ['extraField']);
+
+				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
+					.resolves({ statusCode: 200, body: [] });
+
+				sandbox.spy(ModelClient.prototype, 'multiSave');
+				sandbox.spy(Invoker, 'call');
+				sandbox.spy(APICreate.prototype, 'postSaveHook');
+
+			},
+			after: (res, sandbox) => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
+				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
+				sandbox.assert.notCalled(Invoker.call);
+				sandbox.assert.notCalled(APICreate.prototype.postSaveHook);
+
+				stopMock();
+			}
+		}, {
+			description: 'Should return 500 when MicroserviceCall fails to get clients from ID Service',
+			request: {
+				data: { clients }
+			},
+			response: { code: 500, body: { message: 'Failed to get Janis ID clients: Service failed' } },
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				mockModelClient();
+
+				sandbox.stub(ModelClient, 'additionalFields')
+					.get(() => ['extraField']);
+
+				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
+					.resolves({ statusCode: 500, body: {} });
+
+				sandbox.spy(ModelClient.prototype, 'multiSave');
+				sandbox.spy(Invoker, 'call');
+				sandbox.spy(APICreate.prototype, 'postSaveHook');
+
+			},
+			after: (res, sandbox) => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
+				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
+				sandbox.assert.notCalled(Invoker.call);
+				sandbox.assert.notCalled(APICreate.prototype.postSaveHook);
+
+				stopMock();
+			}
+		}, {
+			description: 'Should return 500 when MicroserviceCall fails to get clients from ID Service with API Error message',
+			request: {
+				data: { clients }
+			},
+			response: { code: 500, body: { message: 'Failed to get Janis ID clients: Some API Error' } },
+			before: sandbox => {
+
+				delete ClientFormatter.settings;
+
+				mockModelClient();
+
+				sandbox.stub(ModelClient, 'additionalFields')
+					.get(() => ['extraField']);
+
+				sandbox.stub(Settings, 'get').returns(fakeDBSettings);
+
+				setEnv();
+
+				stubGetSecret(sandbox);
+
+				sandbox.stub(MicroserviceCall.prototype, 'safeList')
+					.withArgs('id', 'client', { filters: { clientCode: clients }, limit: clients.length })
+					.resolves({ statusCode: 500, body: { message: 'Some API Error' } });
+
+				sandbox.spy(ModelClient.prototype, 'multiSave');
+				sandbox.spy(Invoker, 'call');
+				sandbox.spy(APICreate.prototype, 'postSaveHook');
+
+			},
+			after: (res, sandbox) => {
+
+				secretsNotCalled(sandbox);
+
+				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', {
+					filters: { clientCode: clients },
+					limit: clients.length
+				});
+
+				sandbox.assert.notCalled(ModelClient.prototype.multiSave);
+				sandbox.assert.notCalled(Invoker.call);
+				sandbox.assert.notCalled(APICreate.prototype.postSaveHook);
 
 				stopMock();
 			}
@@ -329,8 +630,8 @@ describe('Client Create API', () => {
 				assertSecretsGet(sandbox, janisServiceName);
 
 				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
-
 				sandbox.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
+
 				stopMock();
 			}
 		}, {
@@ -373,11 +674,8 @@ describe('Client Create API', () => {
 
 				stubGetSecret(sandbox);
 
-				sandbox.stub(ModelClient.prototype, 'multiSave')
-					.resolves(true);
-
-				sandbox.stub(Invoker, 'call')
-					.resolves();
+				sandbox.spy(ModelClient.prototype, 'multiSave');
+				sandbox.spy(Invoker, 'call');
 			},
 			after: (res, sandbox) => {
 
@@ -386,7 +684,7 @@ describe('Client Create API', () => {
 
 				stopMock();
 
-				assertSecretsGet(sandbox, janisServiceName);
+				secretsNotCalled(sandbox);
 			}
 		}
 	]);

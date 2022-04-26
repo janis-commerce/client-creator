@@ -147,7 +147,7 @@ To skip the fetch of the credentials, it can be used the setting `skipFetchCrede
 }
 ```
 
-### ClientModel
+### :sparkles::new::sparkles: ClientModel
 At `./[MS_PATH]/models/client.js`
 
 ```js
@@ -155,6 +155,50 @@ At `./[MS_PATH]/models/client.js`
 const { ModelClient } = require('@janiscommerce/client-creator');
 
 module.exports = ModelClient;
+```
+
+:new: **Additional Fields**  
+Additional fields is a *getter* that allows the service to customize the clients fields, this is useful when a service needs their own custom data in clients.
+
+> #### :information_source: This will affect Client Created API and EventListener and also Client Updated EventListener behavior
+> When a client is created or modified, the current client will be obtained from ID service and **only the additional fields that exist in the getter** will be saved in the service along with the basic client fields.
+
+#### Example:
+```js
+'use strict';
+const { ModelClient } = require('@janiscommerce/client-creator');
+
+module.exports = class MyModelClient extends ModelClient {
+
+  static get additionalFields() {
+
+    return [
+      'myAdditionalField',
+      'anotherAdditionalField'
+    ]
+  }
+};
+```
+
+#### If a new client is created with these additional fields:
+```json
+{
+  "name": "Some Client",
+  "code": "some-client",
+  "myAdditionalField": "some-additional-data",
+  "anotherAdditionalField": "another-additional-data",
+  "unusedAdditionalField": "unused-data"
+}
+```
+
+#### The client will be saved in the service with only the specified additional fields:
+```json
+{
+  "name": "Some Client",
+  "code": "some-client",
+  "myAdditionalField": "some-additional-data",
+  "anotherAdditionalField": "another-additional-data"
+}
 ```
 
 ### APICreate
@@ -262,11 +306,12 @@ The `APICreate` and `listeners` have a hook for post processing the client or cl
 
 #### APICreate
 
-#### `postSaveHook(clientCodes)`
-Receives the clientCodes from the API.
+#### `postSaveHook(clientCodes, clients)`
+Receives the clientCodes and clients from the API.
 
 Parameters:
 - clientCodes `string Array`: The client created codes.
+- clients `object Array`: The clients created objects that were saved.
 
 ##### Example
 ```js
@@ -275,12 +320,16 @@ const { APICreate } = require('@janiscommerce/client-creator');
 
 class ClientCreateAPI extends APICreate {
 
-  async postSaveHook(clientCodes) {
+  async postSaveHook(clientCodes, clients) {
 
       await myPostSaveMethod(clientCodes);
 
       clientCodes.forEach(clientCode => {
           console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
+      })
+
+      clients.forEach(({ databases, status }) => {
+        console.log(`This epic client has ${databases.length} databases and its status is ${status}`)
       })
     }
 }
@@ -289,11 +338,12 @@ module.exports = ClientCreateAPI;
 ```
 
 #### Listener Created   
-#### `postSaveHook(clientCode)`
-Receives the clientCode from the event.
+#### `postSaveHook(clientCode, client)`
+Receives the clientCode and client from the event.
 
 Parameters:
-- clientCode `string`: The client created code.gs of the created client.
+- clientCode `string`: The client created code of the created client.
+- client `object`: The client created object that was saved.
 
 It can be implemented as the example bellow:
 ##### Example
@@ -304,8 +354,9 @@ const { ListenerCreated } = require('@janiscommerce/client-creator');
 
 class ClientCreateListener extends ListenerCreated {
 
-  async postSaveHook(clientCode) {
+  async postSaveHook(clientCode, client) {
     console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
+    console.log(`Saved client has ${client.databases.length} databases! Whoaaa`)
   }
 }
 

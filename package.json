@@ -50,6 +50,7 @@
     "@janiscommerce/model": "^5.5.0",
     "@janiscommerce/mongodb-index-creator": "^2.3.0",
     "@janiscommerce/settings": "^1.0.1",
-    "@janiscommerce/superstruct": "^1.2.0"
+    "@janiscommerce/superstruct": "^1.2.0",
+    "lllog": "^1.1.2"
   }
 }
