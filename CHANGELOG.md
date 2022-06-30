@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.3.1] - 2022-06-3
+### Fixed
+- ID Client Request using correct `pageSize` instead of `limit`
+
 ## [5.3.0] - 2022-04-26
 ### Added
 - `additionalFields` getter in **ModelClient** for customizing client fields
