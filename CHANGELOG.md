@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [5.3.1] - 2022-06-3
+## [5.3.2] - 2022-07-01
+### Fixed
+- ID Client Request `endpointParameters` wrong format
+
+## [5.3.1] - 2022-06-30
 ### Fixed
 - ID Client Request using correct `pageSize` instead of `limit`
 
