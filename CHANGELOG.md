@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.3.4] - 2022-07-01
+### Fixed
+- ID fails getting clients when filter by code
+
 ## [5.3.3] - 2022-07-01
 ### Changed
 - Added logs when ID fails getting clients
