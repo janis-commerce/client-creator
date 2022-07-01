@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.3.3] - 2022-07-01
+### Changed
+- Added logs when ID fails getting clients
+
 ## [5.3.2] - 2022-07-01
 ### Fixed
 - ID Client Request `endpointParameters` wrong format
