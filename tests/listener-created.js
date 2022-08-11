@@ -3,11 +3,12 @@
 require('lllog')('none');
 
 const EventListenerTest = require('@janiscommerce/event-listener-test');
-const MongoDBIndexCreator = require('@janiscommerce/mongodb-index-creator');
-const MicroserviceCall = require('@janiscommerce/microservice-call');
-const Settings = require('@janiscommerce/settings');
 
 const { ServerlessHandler } = require('@janiscommerce/event-listener');
+
+const { Invoker } = require('@janiscommerce/lambda');
+
+const Settings = require('@janiscommerce/settings');
 
 const { ListenerCreated, ModelClient } = require('../lib');
 
@@ -41,8 +42,8 @@ describe('Client Created Listener', async () => {
 		event: 'created'
 	};
 
-	const stubSettings = sandbox => {
-		sandbox.stub(Settings, 'get')
+	const stubSettings = sinon => {
+		sinon.stub(Settings, 'get')
 			.returns(fakeDBSettings);
 	};
 
@@ -50,6 +51,20 @@ describe('Client Created Listener', async () => {
 
 	const janisServiceName = 'some-service-name';
 	process.env.JANIS_SERVICE_NAME = janisServiceName;
+
+	const getIDClientsResolves = (sinon, clients = [], statusCode = 200) => {
+		sinon.stub(Invoker, 'serviceCall')
+			.resolves(({ statusCode, payload: { items: clients } }));
+	};
+
+	const assertGetIDClients = sinon => {
+		sinon.assert.calledOnceWithExactly(Invoker.serviceCall, 'id', 'GetClient', {
+			filters: { clientCode: [validEvent.id] },
+			limit: 1
+		});
+	};
+
+	const assertInvokeIndexCreator = sinon => sinon.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
 	await EventListenerTest(ClientCreated, [
 		{
@@ -63,30 +78,30 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 500 when client model fails to save the new client',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'save')
+				sinon.stub(ModelClient.prototype, 'multiSave')
 					.rejects();
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.resolves();
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				assertSecretsGet(sandbox, janisServiceName);
+				assertSecretsGet(sinon, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
-				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [fakeClient]);
+				sinon.assert.notCalled(Invoker.call);
 
 				stopMock();
 
@@ -96,30 +111,30 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 500 when the index creator fails',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'save')
+				sinon.stub(ModelClient.prototype, 'multiSave')
 					.resolves();
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.rejects();
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				assertSecretsGet(sandbox, janisServiceName);
+				assertSecretsGet(sinon, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
-				sandbox.assert.calledOnce(MongoDBIndexCreator.prototype.executeForClientCode);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [fakeClient]);
+				sinon.assert.calledOnce(Invoker.call);
 
 				stopMock();
 
@@ -129,33 +144,35 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 200 when client model saves the new client successfully',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'save')
-					.resolves('5dea9fc691240d00084083f9');
+				sinon.stub(ModelClient.prototype, 'multiSave')
+					.resolves('');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.resolves();
 
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				assertSecretsGet(sandbox, janisServiceName);
+				assertSecretsGet(sinon, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
-				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [fakeClient]);
+
+				assertInvokeIndexCreator(sinon);
+
+				sinon.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
 
 				stopMock();
 
@@ -165,43 +182,44 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 200 when client model saves the new client successfully with additional fields',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
-				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: [validEvent.id] } })
-					.resolves({ statusCode: 200, body: [{ ...fakeClient, extraField: 'some-data', randomField: 'foobar' }] });
+				getIDClientsResolves(sinon, [{ ...fakeClient, extraField: 'some-data', randomField: 'foobar' }]);
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient, 'additionalFields')
+				sinon.stub(ModelClient, 'additionalFields')
 					.get(() => ['extraField']);
 
-				sandbox.stub(ModelClient.prototype, 'save')
-					.resolves('5dea9fc691240d00084083f9');
+				sinon.stub(ModelClient.prototype, 'multiSave')
+					.resolves('');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.resolves();
 
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				assertSecretsGet(sandbox, janisServiceName);
+				assertSecretsGet(sinon, janisServiceName);
 
 				const expectedClientToSave = { ...fakeClient, extraField: 'some-data' };
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: [validEvent.id] } });
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, expectedClientToSave);
-				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, expectedClientToSave);
+				assertGetIDClients(sinon);
+
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [expectedClientToSave]);
+
+				assertInvokeIndexCreator(sinon);
+
+				sinon.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, expectedClientToSave);
 
 				stopMock();
 
@@ -209,40 +227,39 @@ describe('Client Created Listener', async () => {
 			responseCode: 200
 		},
 		{
-			description: 'Should return 200 when MicroserviceCall can\'t get the client from ID service',
+			description: 'Should return 200 when can\'t get the client from ID service',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
-				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: [validEvent.id] } })
-					.resolves({ statusCode: 400, body: {} });
+				getIDClientsResolves(sinon, [], 400);
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient, 'additionalFields')
+				sinon.stub(ModelClient, 'additionalFields')
 					.get(() => ['extraField']);
 
-				sandbox.spy(ModelClient.prototype, 'save');
+				sinon.spy(ModelClient.prototype, 'multiSave');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(Invoker, 'call');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				secretsNotCalled(sandbox);
+				secretsNotCalled(sinon);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: [validEvent.id] } });
-				sandbox.assert.notCalled(ModelClient.prototype.save);
-				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
-				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+				assertGetIDClients(sinon);
+
+				sinon.assert.notCalled(ModelClient.prototype.multiSave);
+				sinon.assert.notCalled(Invoker.call);
+				sinon.assert.notCalled(ListenerCreated.prototype.postSaveHook);
 
 				stopMock();
 
@@ -250,40 +267,39 @@ describe('Client Created Listener', async () => {
 			responseCode: 200
 		},
 		{
-			description: 'Should return 200 when MicroserviceCall don\'t any client from ID service',
+			description: 'Should return 200 when not found any client from ID service',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
-				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: [validEvent.id] } })
-					.resolves({ statusCode: 200, body: [] });
+				getIDClientsResolves(sinon, []);
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient, 'additionalFields')
+				sinon.stub(ModelClient, 'additionalFields')
 					.get(() => ['extraField']);
 
-				sandbox.spy(ModelClient.prototype, 'save');
+				sinon.spy(ModelClient.prototype, 'multiSave');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(Invoker, 'call');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				secretsNotCalled(sandbox);
+				secretsNotCalled(sinon);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: [validEvent.id] } });
-				sandbox.assert.notCalled(ModelClient.prototype.save);
-				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
-				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+				assertGetIDClients(sinon);
+
+				sinon.assert.notCalled(ModelClient.prototype.multiSave);
+				sinon.assert.notCalled(Invoker.call);
+				sinon.assert.notCalled(ListenerCreated.prototype.postSaveHook);
 
 				stopMock();
 
@@ -291,81 +307,39 @@ describe('Client Created Listener', async () => {
 			responseCode: 200
 		},
 		{
-			description: 'Should return 500 when MicroserviceCall fails to get the client from ID service',
+			description: 'Should return 500 when fails to get the client from ID service',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
-				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: [validEvent.id] } })
-					.resolves({ statusCode: 500, body: {} });
+				getIDClientsResolves(sinon, null, 500);
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient, 'additionalFields')
+				sinon.stub(ModelClient, 'additionalFields')
 					.get(() => ['extraField']);
 
-				sandbox.spy(ModelClient.prototype, 'save');
+				sinon.spy(ModelClient.prototype, 'multiSave');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(Invoker, 'call');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				secretsNotCalled(sandbox);
+				secretsNotCalled(sinon);
 
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: [validEvent.id] } });
-				sandbox.assert.notCalled(ModelClient.prototype.save);
-				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
-				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+				assertGetIDClients(sinon);
 
-				stopMock();
-
-			},
-			responseCode: 500
-		},
-		{
-			description: 'Should return 500 when MicroserviceCall fails to get the client from ID service with API Error message',
-			event: validEvent,
-			before: sandbox => {
-
-				delete ClientFormatter.settings;
-
-				sandbox.stub(MicroserviceCall.prototype, 'safeList')
-					.withArgs('id', 'client', { filters: { clientCode: [validEvent.id] } })
-					.resolves({ statusCode: 500, body: { message: 'Some API Error' } });
-
-				mockModelClient();
-
-				sandbox.stub(ModelClient, 'additionalFields')
-					.get(() => ['extraField']);
-
-				sandbox.spy(ModelClient.prototype, 'save');
-
-				stubSettings(sandbox);
-
-				setEnv();
-
-				stubGetSecret(sandbox);
-
-				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
-			},
-			after: sandbox => {
-
-				secretsNotCalled(sandbox);
-
-				sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeList, 'id', 'client', { filters: { clientCode: [validEvent.id] } });
-				sandbox.assert.notCalled(ModelClient.prototype.save);
-				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
-				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+				sinon.assert.notCalled(ModelClient.prototype.multiSave);
+				sinon.assert.notCalled(Invoker.call);
+				sinon.assert.notCalled(ListenerCreated.prototype.postSaveHook);
 
 				stopMock();
 
@@ -375,34 +349,35 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 500 when additional fields getter is invalid',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient, 'additionalFields')
+				sinon.stub(ModelClient, 'additionalFields')
 					.get(() => 'not an array');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.spy(MicroserviceCall.prototype, 'safeList');
-				sandbox.spy(ModelClient.prototype, 'save');
-				sandbox.spy(MongoDBIndexCreator.prototype, 'executeForClientCode');
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(Invoker, 'serviceCall');
+
+				sinon.spy(ModelClient.prototype, 'multiSave');
+				sinon.spy(Invoker, 'call');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				secretsNotCalled(sandbox);
+				secretsNotCalled(sinon);
 
-				sandbox.assert.notCalled(MicroserviceCall.prototype.safeList);
-				sandbox.assert.notCalled(ModelClient.prototype.save);
-				sandbox.assert.notCalled(MongoDBIndexCreator.prototype.executeForClientCode);
-				sandbox.assert.notCalled(ListenerCreated.prototype.postSaveHook);
+				sinon.assert.notCalled(Invoker.serviceCall);
+				sinon.assert.notCalled(ModelClient.prototype.multiSave);
+				sinon.assert.notCalled(Invoker.call);
+				sinon.assert.notCalled(ListenerCreated.prototype.postSaveHook);
 
 				stopMock();
 
@@ -412,20 +387,20 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 200 when client model saves the new client successfully after fetching credentials',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'save')
-					.resolves('5dea9fc691240d00084083f9');
+				sinon.stub(ModelClient.prototype, 'multiSave')
+					.resolves('');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				stubGetSecret(sandbox, {
+				stubGetSecret(sinon, {
 					databases: {
 						secureDB: {
 							write: {
@@ -437,14 +412,14 @@ describe('Client Created Listener', async () => {
 					}
 				});
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.resolves();
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				assertSecretsGet(sandbox, janisServiceName);
+				assertSecretsGet(sinon, janisServiceName);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, prepareFakeClient(validEvent.id, true));
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [prepareFakeClient(validEvent.id, true)]);
 				stopMock();
 
 			},
@@ -453,31 +428,33 @@ describe('Client Created Listener', async () => {
 		{
 			description: 'Should return 200 when client model saves the new client successfully without credentials after Secrets Manager throws',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'save')
-					.resolves('5dea9fc691240d00084083f9');
+				sinon.stub(ModelClient.prototype, 'multiSave')
+					.resolves('');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				secretThrows(sandbox);
+				secretThrows(sinon);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.resolves();
 
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
-				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [fakeClient]);
+
+				assertInvokeIndexCreator(sinon);
+
+				sinon.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
 
 				stopMock();
 
@@ -486,31 +463,33 @@ describe('Client Created Listener', async () => {
 		}, {
 			description: 'Should return 200 when client model saves the new client successfully without credentials after Secrets Manager getValue rejects',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'save')
-					.resolves('5dea9fc691240d00084083f9');
+				sinon.stub(ModelClient.prototype, 'multiSave')
+					.resolves('');
 
-				stubSettings(sandbox);
+				stubSettings(sinon);
 
 				setEnv();
 
-				getValueRejects(sandbox);
+				getValueRejects(sinon);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.resolves();
 
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, fakeClient);
-				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [fakeClient]);
+
+				assertInvokeIndexCreator(sinon);
+
+				sinon.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, fakeClient);
 
 				stopMock();
 
@@ -519,36 +498,38 @@ describe('Client Created Listener', async () => {
 		}, {
 			description: 'Should return 200 and save the client when no settings found',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'save')
-					.resolves('5dea9fc691240d00084083f9');
+				sinon.stub(ModelClient.prototype, 'multiSave')
+					.resolves('');
 
-				sandbox.stub(Settings, 'get')
+				sinon.stub(Settings, 'get')
 					.returns();
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.resolves();
 
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				secretsNotCalled(sandbox);
+				secretsNotCalled(sinon);
 
 				const expectedSavedClient = prepareFakeClient(validEvent.id, false, false);
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, expectedSavedClient);
-				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, expectedSavedClient);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [expectedSavedClient]);
+
+				assertInvokeIndexCreator(sinon);
+
+				sinon.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, expectedSavedClient);
 
 				stopMock();
 
@@ -557,39 +538,41 @@ describe('Client Created Listener', async () => {
 		}, {
 			description: 'Should return 200 and save the client when no need to fetch credentials',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				delete ClientFormatter.settings;
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'save')
-					.resolves('5dea9fc691240d00084083f9');
+				sinon.stub(ModelClient.prototype, 'multiSave')
+					.resolves('');
 
 				const { secureDB, ...noSecureSettings } = fakeDBSettings;
 
-				sandbox.stub(Settings, 'get')
+				sinon.stub(Settings, 'get')
 					.returns(noSecureSettings);
 
 				setEnv();
 
-				stubGetSecret(sandbox);
+				stubGetSecret(sinon);
 
-				sandbox.stub(MongoDBIndexCreator.prototype, 'executeForClientCode')
+				sinon.stub(Invoker, 'call')
 					.resolves();
 
-				sandbox.spy(ListenerCreated.prototype, 'postSaveHook');
+				sinon.spy(ListenerCreated.prototype, 'postSaveHook');
 			},
-			after: sandbox => {
+			after: sinon => {
 
-				secretsNotCalled(sandbox);
+				secretsNotCalled(sinon);
 
 				const preparedClient = prepareFakeClient(validEvent.id);
 				delete preparedClient.databases.secureDB;
 
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.save, preparedClient);
-				sandbox.assert.calledOnceWithExactly(MongoDBIndexCreator.prototype.executeForClientCode, validEvent.id);
-				sandbox.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, preparedClient);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [preparedClient]);
+
+				assertInvokeIndexCreator(sinon);
+
+				sinon.assert.calledOnceWithExactly(ListenerCreated.prototype.postSaveHook, validEvent.id, preparedClient);
 
 				stopMock();
 

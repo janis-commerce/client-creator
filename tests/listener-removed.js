@@ -2,6 +2,7 @@
 
 const EventListenerTest = require('@janiscommerce/event-listener-test');
 const { ServerlessHandler } = require('@janiscommerce/event-listener');
+
 const Model = require('@janiscommerce/model');
 
 const { ListenerRemoved, ModelClient } = require('../lib');
@@ -42,8 +43,8 @@ describe('Client Removed Listener', async () => {
 		id: client.code
 	};
 
-	const sandboxAssertGetBy = sandbox => {
-		sandbox.assert.calledOnceWithExactly(ModelClient.prototype.getBy, 'code', client.code, { unique: true });
+	const assertClientGet = sinon => {
+		sinon.assert.calledOnceWithExactly(ModelClient.prototype.get, { filters: { code: [client.code] } });
 	};
 
 	await EventListenerTest(ClientRemoved, [
@@ -54,125 +55,120 @@ describe('Client Removed Listener', async () => {
 				id: undefined
 			},
 			responseCode: 400
-		},
-		{
+		}, {
 			description: 'Should return 404 when client model could not found the client',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'getBy').resolves(null);
+				sinon.stub(ModelClient.prototype, 'get').resolves([]);
 
-				sandbox.spy(Model.prototype, 'dropDatabase');
+				sinon.spy(Model.prototype, 'dropDatabase');
 
-				sandbox.spy(ModelClient.prototype, 'remove');
+				sinon.spy(ModelClient.prototype, 'multiRemove');
 
-				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
+				sinon.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
-			after: sandbox => {
-				sandboxAssertGetBy(sandbox);
-				sandbox.assert.notCalled(Model.prototype.dropDatabase);
-				sandbox.assert.notCalled(ModelClient.prototype.remove);
-				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
+			after: sinon => {
+				assertClientGet(sinon);
+				sinon.assert.notCalled(Model.prototype.dropDatabase);
+				sinon.assert.notCalled(ModelClient.prototype.multiRemove);
+				sinon.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
 
 				stopMock();
 			},
 			responseCode: 404
-		},
-		{
+		}, {
 			description: 'Should return 500 when client model fails getting the client',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'getBy').rejects();
+				sinon.stub(ModelClient.prototype, 'get').rejects();
 
-				sandbox.spy(Model.prototype, 'dropDatabase');
+				sinon.spy(Model.prototype, 'dropDatabase');
 
-				sandbox.spy(ModelClient.prototype, 'remove');
+				sinon.spy(ModelClient.prototype, 'multiRemove');
 
-				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
+				sinon.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
-			after: sandbox => {
-				sandboxAssertGetBy(sandbox);
-				sandbox.assert.notCalled(Model.prototype.dropDatabase);
-				sandbox.assert.notCalled(ModelClient.prototype.remove);
-				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
+			after: sinon => {
+				assertClientGet(sinon);
+				sinon.assert.notCalled(Model.prototype.dropDatabase);
+				sinon.assert.notCalled(ModelClient.prototype.multiRemove);
+				sinon.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
 
 				stopMock();
 			},
 			responseCode: 500
-		},
-		{
+		}, {
 			description: 'Should return 500 when model default client fails to drop the database',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'getBy').resolves(client);
+				sinon.stub(ModelClient.prototype, 'get').resolves([client]);
 
-				sandbox.stub(Model.prototype, 'dropDatabase').rejects();
+				sinon.stub(Model.prototype, 'dropDatabase').rejects();
 
-				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
+				sinon.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
-			after: sandbox => {
-				sandboxAssertGetBy(sandbox);
-				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
-				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
+			after: sinon => {
+				assertClientGet(sinon);
+				sinon.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
+				sinon.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
 
 				stopMock();
 			},
 			responseCode: 500
-		},
-		{
+		}, {
 			description: 'Should return 500 when model default client fails removing the client',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'getBy').resolves(client);
+				sinon.stub(ModelClient.prototype, 'get').resolves([client]);
 
-				sandbox.stub(Model.prototype, 'dropDatabase').resolves(true);
+				sinon.stub(Model.prototype, 'dropDatabase').resolves(true);
 
-				sandbox.stub(ModelClient.prototype, 'remove').rejects();
+				sinon.stub(ModelClient.prototype, 'multiRemove').rejects();
 
-				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
+				sinon.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
-			after: sandbox => {
-				sandboxAssertGetBy(sandbox);
-				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
-				sandbox.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
+			after: sinon => {
+				assertClientGet(sinon);
+				sinon.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiRemove, { code: [client.code] });
+				sinon.assert.notCalled(ListenerRemoved.prototype.postRemovedHook);
 
 				stopMock();
 			},
 			responseCode: 500
-		},
-		{
+		}, {
 			description: 'Should return 200 when client was removed',
 			event: validEvent,
-			before: sandbox => {
+			before: sinon => {
 
 				mockModelClient();
 
-				sandbox.stub(ModelClient.prototype, 'getBy').resolves(client);
+				sinon.stub(ModelClient.prototype, 'get').resolves([client]);
 
-				sandbox.stub(Model.prototype, 'dropDatabase').resolves(true);
+				sinon.stub(Model.prototype, 'dropDatabase').resolves(true);
 
-				sandbox.stub(ModelClient.prototype, 'remove').resolves(true);
+				sinon.stub(ModelClient.prototype, 'multiRemove').resolves(true);
 
-				sandbox.spy(ListenerRemoved.prototype, 'postRemovedHook');
+				sinon.spy(ListenerRemoved.prototype, 'postRemovedHook');
 			},
-			after: sandbox => {
-				sandboxAssertGetBy(sandbox);
-				sandbox.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
-				sandbox.assert.calledOnceWithExactly(ModelClient.prototype.remove, { code: client.code });
-				sandbox.assert.calledOnceWithExactly(ListenerRemoved.prototype.postRemovedHook, client.code);
+			after: sinon => {
+				assertClientGet(sinon);
+				sinon.assert.calledOnceWithExactly(Model.prototype.dropDatabase);
+				sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiRemove, { code: [client.code] });
+				sinon.assert.calledOnceWithExactly(ListenerRemoved.prototype.postRemovedHook, client.code);
 
 				stopMock();
 			},

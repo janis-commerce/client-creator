@@ -3,8 +3,10 @@
 require('lllog')('none');
 
 const EventListenerTest = require('@janiscommerce/event-listener-test');
-const MicroserviceCall = require('@janiscommerce/microservice-call');
+
 const { ServerlessHandler } = require('@janiscommerce/event-listener');
+
+const { Invoker } = require('@janiscommerce/lambda');
 
 const { ListenerUpdated, ModelClient } = require('../lib');
 
@@ -18,7 +20,7 @@ const ClientUpdated = (...args) => ServerlessHandler.handle(ListenerUpdated, ...
 describe('Client Updated Listener', async () => {
 
 	const validEvent = {
-		id: 'some-client',
+		id: '62f5406ccb61cc1aaa8aeb39',
 		service: 'id',
 		entity: 'client',
 		event: 'updated'
@@ -44,10 +46,24 @@ describe('Client Updated Listener', async () => {
 		id: '5fc0f3bc617a1b3e98009c4c'
 	};
 
-	const id = { id: validEvent.id };
+	const getIDClientsResolves = (sinon, clients = [], statusCode = 200) => {
+		sinon.stub(Invoker, 'serviceCall')
+			.resolves(({ statusCode, payload: { items: clients } }));
+	};
 
-	const expectedMsCallArgs = ['id', 'client', 'get', null, null, id];
-	const expectedMsCallResponse = { statusCode: 200, body: client };
+	const assertGetIDClients = sinon => {
+		sinon.assert.calledOnceWithExactly(Invoker.serviceCall, 'id', 'GetClient', {
+			filters: { id: [validEvent.id] },
+			limit: 1
+		});
+	};
+
+	const assertSaveClient = (sinon, clientToSave) => {
+		sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [{
+			code: client.code,
+			...clientToSave
+		}]);
+	};
 
 	describe('Errors', async () => {
 
@@ -59,102 +75,76 @@ describe('Client Updated Listener', async () => {
 					id: undefined
 				},
 				responseCode: 400
-			},
-			{
+			}, {
 				description: 'Should return 500 when client model fails updating the status',
 				event: validEvent,
-				before: sandbox => {
+				before: sinon => {
 
 					mockModelClient();
 
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves(expectedMsCallResponse);
+					getIDClientsResolves(sinon, [client]);
 
-					sandbox.stub(ModelClient.prototype, 'update')
+					sinon.stub(ModelClient.prototype, 'multiSave')
 						.rejects();
 
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
+					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
-				after: sandbox => {
+				after: sinon => {
 
-					sandbox.assert.calledOnceWithExactly(ModelClient.prototype.update, { status: client.status }, { code: client.code });
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
+					assertGetIDClients(sinon);
+
+					assertSaveClient(sinon, { status: client.status });
+
+					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
 
 					stopMock();
 
 				},
 				responseCode: 500
-			},
-			{
-				description: 'Should return 500 and throw custom error when msCall fails to getting the client',
+			}, {
+				description: 'Should return 500 and throw error when fails to getting the client',
 				event: validEvent,
-				before: sandbox => {
+				before: sinon => {
 
 					mockModelClient();
 
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves({ statusCode: 500, body: { message: 'Internal server error' } });
+					getIDClientsResolves(sinon, null, 500);
 
-					sandbox.spy(ModelClient.prototype, 'update');
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
+					sinon.spy(ModelClient.prototype, 'update');
+					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
-				after: sandbox => {
+				after: sinon => {
 
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.notCalled(ModelClient.prototype.update);
-					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
+					assertGetIDClients(sinon);
+
+					sinon.assert.notCalled(ModelClient.prototype.update);
+					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
 
 					stopMock();
 
 				},
 				responseCode: 500
-			},
-			{
-				description: 'Should return 500 and throw generic error when msCall fails to getting the client',
-				event: validEvent,
-				before: sandbox => {
-
-					mockModelClient();
-
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves({ statusCode: 500, body: {} });
-
-					sandbox.spy(ModelClient.prototype, 'update');
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sandbox => {
-
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.notCalled(ModelClient.prototype.update);
-					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
-
-					stopMock();
-
-				},
-				responseCode: 500
-			},
-			{
+			}, {
 				description: 'Should return 500 when client model additional fields getter is invalid',
 				event: validEvent,
-				before: sandbox => {
+				before: sinon => {
 
 					mockModelClient();
 
-					sandbox.stub(ModelClient, 'additionalFields')
+					sinon.stub(ModelClient, 'additionalFields')
 						.get(() => 'not an array');
 
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves(expectedMsCallResponse);
+					getIDClientsResolves(sinon, [client]);
 
-					sandbox.spy(ModelClient.prototype, 'update');
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
+					sinon.spy(ModelClient.prototype, 'update');
+					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
-				after: sandbox => {
+				after: sinon => {
 
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.notCalled(ModelClient.prototype.update);
-					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
+					assertGetIDClients(sinon);
+
+					sinon.assert.notCalled(ModelClient.prototype.update);
+					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
 
 					stopMock();
 
@@ -168,141 +158,137 @@ describe('Client Updated Listener', async () => {
 
 		await EventListenerTest(ClientUpdated, [
 			{
-				description: 'Should return 200 and return when msCall gets 400 error',
+				description: 'Should return 200 and return when ID returns 400',
 				event: validEvent,
-				before: sandbox => {
+				before: sinon => {
 
 					mockModelClient();
 
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves({ statusCode: 400, body: {} });
+					getIDClientsResolves(sinon, null, 400);
 
-					sandbox.spy(ModelClient.prototype, 'update');
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
+					sinon.spy(ModelClient.prototype, 'update');
+					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
-				after: sandbox => {
+				after: sinon => {
 
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.notCalled(ModelClient.prototype.update);
-					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
+					assertGetIDClients(sinon);
+
+					sinon.assert.notCalled(ModelClient.prototype.update);
+					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
 
 					stopMock();
 
 				},
 				responseCode: 200
-			},
-			{
-				description: 'Should return 200 and return when msCall could not find the client',
+			}, {
+				description: 'Should return 200 and return when could not find the client',
 				event: validEvent,
-				before: sandbox => {
+				before: sinon => {
 
 					mockModelClient();
 
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves({ statusCode: 404, body: { message: 'Internal server error' } });
+					getIDClientsResolves(sinon, []);
 
-					sandbox.spy(ModelClient.prototype, 'update');
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
+					sinon.spy(ModelClient.prototype, 'update');
+					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
-				after: sandbox => {
+				after: sinon => {
 
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.notCalled(ModelClient.prototype.update);
-					sandbox.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
+					assertGetIDClients(sinon);
+
+					sinon.assert.notCalled(ModelClient.prototype.update);
+					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
 
 					stopMock();
 
 				},
 				responseCode: 200
-			},
-			{
+			}, {
 				description: 'Should return 200 when client model updates the client status',
 				event: validEvent,
-				before: sandbox => {
+				before: sinon => {
 
 					mockModelClient();
 
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves(expectedMsCallResponse);
+					getIDClientsResolves(sinon, [client]);
 
-					sandbox.stub(ModelClient.prototype, 'update')
-						.resolves(true);
+					sinon.stub(ModelClient.prototype, 'multiSave')
+						.resolves();
 
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
+					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
-				after: sandbox => {
+				after: sinon => {
 
-					sandbox.assert.calledOnceWithExactly(ModelClient.prototype.update, { status: client.status }, { code: client.code });
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, client);
+					assertGetIDClients(sinon);
+
+					assertSaveClient(sinon, { status: client.status });
+
+					sinon.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, client);
 
 					stopMock();
 
 				},
 				responseCode: 200
-			},
-			{
+			}, {
 				description: 'Should return 200 when client model updates the client status using additional fields',
 				event: validEvent,
-				before: sandbox => {
+				before: sinon => {
 
 					mockModelClient();
 
-					sandbox.stub(ModelClient, 'additionalFields')
+					sinon.stub(ModelClient, 'additionalFields')
 						.get(() => ['extraField', 'anotherExtraField']);
 
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves({
-							statusCode: 200,
-							body: {
-								...client,
-								extraField: 'some-data',
-								anotherExtraField: 0,
-								randomField: 'other-data'
-							}
-						});
+					getIDClientsResolves(sinon, [{
+						...client,
+						extraField: 'some-data',
+						anotherExtraField: 0,
+						randomField: 'other-data'
+					}]);
 
-					sandbox.stub(ModelClient.prototype, 'update')
-						.resolves(true);
+					sinon.stub(ModelClient.prototype, 'multiSave')
+						.resolves();
 
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
+					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
-				after: sandbox => {
+				after: sinon => {
+
+					assertGetIDClients(sinon);
 
 					const clientFieldsToUpdate = { extraField: 'some-data', anotherExtraField: 0 };
 
-					sandbox.assert.calledOnceWithExactly(ModelClient.prototype.update, { ...clientFieldsToUpdate, status: client.status }, { code: client.code });
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, { ...client, ...clientFieldsToUpdate, randomField: 'other-data' });
+					assertSaveClient(sinon, { ...clientFieldsToUpdate, status: client.status });
+
+					sinon.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, { ...client, ...clientFieldsToUpdate, randomField: 'other-data' });
 
 					stopMock();
 
 				},
 				responseCode: 200
-			},
-			{
+			}, {
 				description: 'Should return 200 and unset the additional fields that were removed in ID service',
 				event: validEvent,
-				before: sandbox => {
+				before: sinon => {
 
 					mockModelClient();
 
-					sandbox.stub(ModelClient, 'additionalFields')
+					sinon.stub(ModelClient, 'additionalFields')
 						.get(() => ['extraField']);
 
-					sandbox.stub(MicroserviceCall.prototype, 'safeCall')
-						.resolves({ statusCode: 200, body: { ...client, randomField: 'other-data' } });
+					getIDClientsResolves(sinon, [{ ...client, randomField: 'other-data' }]);
 
-					sandbox.stub(ModelClient.prototype, 'update')
-						.resolves(true);
+					sinon.stub(ModelClient.prototype, 'multiSave')
+						.resolves();
 
-					sandbox.spy(ListenerUpdated.prototype, 'postSaveHook');
+					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
 				},
-				after: sandbox => {
+				after: sinon => {
 
-					sandbox.assert.calledOnceWithExactly(ModelClient.prototype.update, { status: client.status, $unset: { extraField: '' } }, { code: client.code });
-					sandbox.assert.calledOnceWithExactly(MicroserviceCall.prototype.safeCall, ...expectedMsCallArgs);
-					sandbox.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, { ...client, randomField: 'other-data' });
+					assertGetIDClients(sinon);
+
+					assertSaveClient(sinon, { status: client.status, $unset: { extraField: '' } });
+
+					sinon.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, { ...client, randomField: 'other-data' });
 
 					stopMock();
 

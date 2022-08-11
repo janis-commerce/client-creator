@@ -67,12 +67,12 @@ If we create a `brand-new-client` client with the previous settings, we will get
   "status": "active"
 }
 ```
- 
-### 🔑 Secrets 
-The package will get the **secret** using the *JANIS_SERVICE_NAME* environment variable.  
+
+### 🔑 Secrets
+The package will get the **secret** using the *JANIS_SERVICE_NAME* environment variable.
 If the **secret** was found, the result will be merged with the settings found in the *`janiscommercerc.json`* in the `newClientsDatabases` field.
 
-The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) 
+The Secrets are stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager) and obtained with the package [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager)
 
 <details>
 	<summary>Complete example in which the settings are obtained in the settings file and merged with the fetched credentials in AWS Secrets Manager.</summary>
@@ -157,7 +157,7 @@ const { ModelClient } = require('@janiscommerce/client-creator');
 module.exports = ModelClient;
 ```
 
-:new: **Additional Fields**  
+:new: **Additional Fields**
 Additional fields is a *getter* that allows the service to customize the clients fields, this is useful when a service needs their own custom data in clients.
 
 > #### :information_source: This will affect Client Created API and EventListener and also Client Updated EventListener behavior
@@ -212,7 +212,7 @@ module.exports = APICreate;
 ```
 
 ### ListenerCreated
-This listener handles a created event emitted by Janis ID service. It allows to create a new client in the core database and set a new database for him.  
+This listener handles a created event emitted by Janis ID service. It allows to create a new client in the core database and set a new database for him.
 Use it at `./[MS_PATH]/event-listeners/id/client/created.js`
 
 ```js
@@ -225,7 +225,7 @@ module.exports.handler = (...args) => ServerlessHandler.handle(ListenerCreated, 
 ```
 
 ### ListenerUpdated
-This listener handles an updated event emitted by Janis ID service. It allows to activate or deactivate a client by changing his status.  
+This listener handles an updated event emitted by Janis ID service. It allows to activate or deactivate a client by changing his status.
 
 Use it at `./[MS_PATH]/event-listeners/id/client/updated.js`
 
@@ -239,7 +239,7 @@ module.exports.handler = (...args) => ServerlessHandler.handle(ListenerUpdated, 
 ```
 
 ### ListenerRemoved
-This listener handles a removed event emitted by Janis ID service. It allows to remove a client from the core clients database and drop his database.  
+This listener handles a removed event emitted by Janis ID service. It allows to remove a client from the core clients database and drop his database.
 
 Use it at `./[MS_PATH]/event-listeners/id/client/removed.js`
 
@@ -277,12 +277,12 @@ At ` ./schemas/client/` add these two files:
 - [base.yml](schemas/base.yml)
 
 
-At ` ./schemas/event-listeners/id/client` add this file: 
+At ` ./schemas/event-listeners/id/client` add this file:
 - [created.yml](schemas/created.yml)
 - [updated.yml](schemas/updated.yml)
 - [removed.yml](schemas/removed.yml)
 
-At ` ./events/src/id/` add this file: 
+At ` ./events/src/id/` add this file:
 - [client.yml](schemas/client.yml)
 
 Finally, create or update `./.nycrc` to avoid coverage leaks:
@@ -299,7 +299,7 @@ Finally, create or update `./.nycrc` to avoid coverage leaks:
 }
 ```
 
-:warning: If exists any customization of the files, do not add the file to the .nyrcr and add the corresponding tests.
+:warning: If exists any customization of the files, do not add the file to the .nycrc and add the corresponding tests.
 
 ### Hooks
 The `APICreate` and `listeners` have a hook for post processing the client or clients created data.
@@ -337,7 +337,7 @@ class ClientCreateAPI extends APICreate {
 module.exports = ClientCreateAPI;
 ```
 
-#### Listener Created   
+#### Listener Created
 #### `postSaveHook(clientCode, client)`
 Receives the clientCode and client from the event.
 
@@ -363,7 +363,7 @@ class ClientCreateListener extends ListenerCreated {
 module.exports.handler = (...args) => ServerlessHandler.handle(ClientCreateListener, ...args);
 ```
 
-#### Listener Updated 
+#### Listener Updated
 #### `postSaveHook(currentClient)`
 Receives the currentClient from the event.
 
@@ -387,12 +387,12 @@ class ClientUpdateListener extends ListenerUpdated {
 module.exports.handler = (...args) => ServerlessHandler.handle(ClientUpdateListener, ...args);
 ```
 
-#### Listener Removed  
+#### Listener Removed
 #### `postRemovedHook(clientCode)`
 Receives the removed clientCode from the API.
 
 Parameters:
-- clientCode `string`: The client removed code.  
+- clientCode `string`: The client removed code.
 
 It can be implemented as the example bellow:
 
