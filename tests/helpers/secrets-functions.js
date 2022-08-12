@@ -11,44 +11,44 @@ const cleanCredentialsCache = () => {
 	CredentialsFetcher.secretValue = undefined;
 };
 
-const stubGetSecret = (sandbox, value) => {
+const stubGetSecret = (sinon, value) => {
 
 	cleanCredentialsCache();
 
-	sandbox.stub(AwsSecretsManager, 'secret')
+	sinon.stub(AwsSecretsManager, 'secret')
 		.returns(new SecretHandler());
 
-	sandbox.stub(SecretHandler.prototype, 'getValue')
+	sinon.stub(SecretHandler.prototype, 'getValue')
 		.resolves(value || {});
 };
 
-const secretThrows = sandbox => {
+const secretThrows = sinon => {
 
 	cleanCredentialsCache();
 
-	sandbox.stub(AwsSecretsManager, 'secret')
+	sinon.stub(AwsSecretsManager, 'secret')
 		.throws(new Error('some secret error'));
 };
 
-const getValueRejects = sandbox => {
+const getValueRejects = sinon => {
 
 	cleanCredentialsCache();
 
-	sandbox.stub(AwsSecretsManager, 'secret')
+	sinon.stub(AwsSecretsManager, 'secret')
 		.returns(new SecretHandler());
 
-	sandbox.stub(SecretHandler.prototype, 'getValue')
+	sinon.stub(SecretHandler.prototype, 'getValue')
 		.rejects(new Error('some getValue error'));
 };
 
-const assertSecretsGet = (sandbox, secretName) => {
-	sandbox.assert.calledOnceWithExactly(AwsSecretsManager.secret, secretName);
-	sandbox.assert.calledOnceWithExactly(SecretHandler.prototype.getValue);
+const assertSecretsGet = (sinon, secretName) => {
+	sinon.assert.calledOnceWithExactly(AwsSecretsManager.secret, secretName);
+	sinon.assert.calledOnceWithExactly(SecretHandler.prototype.getValue);
 };
 
-const secretsNotCalled = sandbox => {
-	sandbox.assert.notCalled(AwsSecretsManager.secret);
-	sandbox.assert.notCalled(SecretHandler.prototype.getValue);
+const secretsNotCalled = sinon => {
+	sinon.assert.notCalled(AwsSecretsManager.secret);
+	sinon.assert.notCalled(SecretHandler.prototype.getValue);
 };
 
 const setEnv = env => {
