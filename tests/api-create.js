@@ -53,7 +53,7 @@ describe('Client Create API', () => {
 
 	const assertGetIDClients = sinon => {
 		sinon.assert.calledOnceWithExactly(Invoker.serviceCall, 'id', 'GetClient', {
-			filters: { clientCode: clients },
+			filters: { code: clients },
 			limit: 2
 		});
 	};
@@ -527,11 +527,11 @@ describe('Client Create API', () => {
 
 	});
 
-	context('When no clients received', () => {
+	context('When processClients parameter received', () => {
 		APITest(APICreate, '/api/client', [
 			{
 				description: 'Should create clients when not found in service',
-				request: { data: {} },
+				request: { data: { processClients: true } },
 				response: { code: 200 },
 				before: sinon => {
 
@@ -576,7 +576,7 @@ describe('Client Create API', () => {
 				}
 			}, {
 				description: 'Should update clients when found in service',
-				request: { data: {} },
+				request: { data: { processClients: true } },
 				response: { code: 200 },
 				before: sinon => {
 
@@ -624,7 +624,7 @@ describe('Client Create API', () => {
 				}
 			}, {
 				description: 'Should remove clients when not found in service',
-				request: { data: {} },
+				request: { data: { processClients: true } },
 				response: { code: 200 },
 				before: sinon => {
 

@@ -7,12 +7,12 @@
 ## Introduction
 This package includes all the generic functionality to create, update and remove a client from the services. Its main purpose is to avoid code repetition.
 
-## Installation
+## :inbox_tray: Installation
 ```sh
 npm install @janiscommerce/client-creator
 ```
 
-## Configuration
+## :hammer_and_wrench: Configuration
 After installing this package you should create or update the following files:
 
 ### Service Settings
@@ -147,31 +147,36 @@ To skip the fetch of the credentials, it can be used the setting `skipFetchCrede
 }
 ```
 
-### :sparkles::new::sparkles: ClientModel
+### ClientModel
 At `./[MS_PATH]/models/client.js`
 
 ```js
 'use strict';
+
 const { ModelClient } = require('@janiscommerce/client-creator');
 
 module.exports = ModelClient;
 ```
 
-:new: **Additional Fields**
+:sparkles::new::sparkles: **Additional Fields**
 Additional fields is a *getter* that allows the service to customize the clients fields, this is useful when a service needs their own custom data in clients.
 
-> #### :information_source: This will affect Client Created API and EventListener and also Client Updated EventListener behavior
+> #### :information_source: This will affect Client Create API and also Client Updated Event behavior
 > When a client is created or modified, the current client will be obtained from ID service and **only the additional fields that exist in the getter** will be saved in the service along with the basic client fields.
 
-#### Example:
+<details>
+  <summary>Examples using additionalFields()</summary>
+
+**Model configuration**
+
 ```js
 'use strict';
+
 const { ModelClient } = require('@janiscommerce/client-creator');
 
 module.exports = class MyModelClient extends ModelClient {
 
   static get additionalFields() {
-
     return [
       'myAdditionalField',
       'anotherAdditionalField'
@@ -180,7 +185,8 @@ module.exports = class MyModelClient extends ModelClient {
 };
 ```
 
-#### If a new client is created with these additional fields:
+**If a new client is created with these additional fields:**
+
 ```json
 {
   "name": "Some Client",
@@ -191,7 +197,8 @@ module.exports = class MyModelClient extends ModelClient {
 }
 ```
 
-#### The client will be saved in the service with only the specified additional fields:
+**The client will be saved in the service with only the specified additional fields:**
+
 ```json
 {
   "name": "Some Client",
@@ -201,19 +208,85 @@ module.exports = class MyModelClient extends ModelClient {
 }
 ```
 
+</details>
+
 ### APICreate
-At `./[MS_PATH]/api/client/post.js`
+This Api will create new clients received in `clients` parameter.
+
+Parameters:
+- clients `string Array`: The clients codes to be created. _optional_
+- processClients `boolean`: If received as **true** will compare Service clients with Janis ID clients and create, update or remove clients when needed. _optional_
+
+File location `./[MS_PATH]/api/client/post.js`
+
+#### Basic version
 
 ```js
 'use strict';
+
 const { APICreate } = require('@janiscommerce/client-creator');
 
 module.exports = APICreate;
 ```
 
+#### `postSaveHook(clientCodes, clients)`
+Receives the clientCodes and clients from the API.
+
+Parameters:
+- clientCodes `string Array`: The client created codes.
+- clients `object Array`: The clients created objects that were saved.
+
+:information_source: This hook is used when received `clients` or `processClients` (when need to create)
+
+
+<details>
+  <summary>Example using ApiCreate postSaveHook()</summary>
+
+```js
+'use strict';
+
+const { APICreate } = require('@janiscommerce/client-creator');
+
+module.exports = class ClientCreateAPI extends APICreate {
+
+  async postSaveHook(clientCodes, clients) {
+
+      await myPostSaveMethod(clientCodes);
+
+      clientCodes.forEach(clientCode => {
+          console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
+      })
+
+      clients.forEach(({ databases, status }) => {
+        console.log(`This epic client has ${databases.length} databases and its status is ${status}`)
+      })
+    }
+};
+```
+</details>
+
+#### `postUpdateHook(clients)`
+Hook called after update clients.
+
+:information_source: This hook is used when received `processClients` (when no need to create)
+
+Parameters:
+- clients `object`: The recently updated client.
+
+#### `postRemoveHook(clients)`
+Hook called after remove clients.
+
+:information_source: This hook is used when received `processClients` (when found clients to remove in service)
+
+Parameters:
+- clientsCodes `string Array`: The recently removed client codes.
+
 ### ListenerCreated
 This listener handles a created event emitted by Janis ID service. It allows to create a new client in the core database and set a new database for him.
-Use it at `./[MS_PATH]/event-listeners/id/client/created.js`
+
+File location `./[MS_PATH]/event-listeners/id/client/created.js`
+
+#### Basic version
 
 ```js
 'use strict';
@@ -224,10 +297,41 @@ const { ListenerCreated } = require('@janiscommerce/client-creator');
 module.exports.handler = (...args) => ServerlessHandler.handle(ListenerCreated, ...args);
 ```
 
+#### `postSaveHook(clientCode, client)`
+Receives the clientCode and client from the event.
+
+Parameters:
+- clientCode `string`: The client created code of the created client.
+- client `object`: The client created object that was saved.
+
+<details>
+  <summary>Example using ListenerCreated postSaveHook()</summary>
+
+```js
+'use strict';
+
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerCreated } = require('@janiscommerce/client-creator');
+
+class ClientCreatedListener extends ListenerCreated {
+
+  async postSaveHook(clientCode, client) {
+    console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
+    console.log(`Saved client has ${client.databases.length} databases! Whoaaa`)
+  }
+}
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ClientCreatedListener, ...args);
+```
+
+</details>
+
 ### ListenerUpdated
 This listener handles an updated event emitted by Janis ID service. It allows to activate or deactivate a client by changing his status.
 
-Use it at `./[MS_PATH]/event-listeners/id/client/updated.js`
+File location `./[MS_PATH]/event-listeners/id/client/updated.js`
+
+#### Basic version
 
 ```js
 'use strict';
@@ -238,10 +342,38 @@ const { ListenerUpdated } = require('@janiscommerce/client-creator');
 module.exports.handler = (...args) => ServerlessHandler.handle(ListenerUpdated, ...args);
 ```
 
+#### `postSaveHook(currentClient)`
+Receives the currentClient from the event.
+
+Parameters:
+- currentClient `object`: The recently updated client.
+
+<details>
+  <summary>Example using ListenerUpdated postSaveHook()</summary>
+
+```js
+'use strict';
+
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerUpdated } = require('@janiscommerce/client-creator');
+
+class ClientUpdatedListener extends ListenerUpdated {
+
+  async postSaveHook(currentClient) {
+    console.log(`Saved client ${currentClient.name}, now i'm gonna do something great`);
+  }
+}
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ClientUpdatedListener, ...args);
+```
+</details>
+
 ### ListenerRemoved
 This listener handles a removed event emitted by Janis ID service. It allows to remove a client from the core clients database and drop his database.
 
-Use it at `./[MS_PATH]/event-listeners/id/client/removed.js`
+File location `./[MS_PATH]/event-listeners/id/client/removed.js`
+
+#### Basic version
 
 ```js
 'use strict';
@@ -252,7 +384,36 @@ const { ListenerRemoved } = require('@janiscommerce/client-creator');
 module.exports.handler = (...args) => ServerlessHandler.handle(ListenerRemoved, ...args);
 ```
 
-### clientFunctions
+#### `postRemovedHook(clientCode)`
+Receives the removed clientCode from the API.
+
+Parameters:
+- clientCode `string`: The client removed code.
+
+<details>
+  <summary>Example using ListenerRemoved postRemovedHook()</summary>
+
+```js
+'use strict';
+
+const { ServerlessHandler } = require('@janiscommerce/event-listener');
+const { ListenerRemoved } = require('@janiscommerce/client-creator');
+
+class ClientRemovedListener extends ListenerRemoved {
+
+  async postRemovedHook(clientCode) {
+    console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
+  }
+}
+
+module.exports.handler = (...args) => ServerlessHandler.handle(ClientRemovedListener, ...args);
+```
+
+</details>
+
+### Serverless functions
+The package exports `clientFunctions`, an array with serverless functions to simplify the usage. It has the hooks for the Create Api and Listeners.
+
 At `./serverless.js`
 
 ```js
@@ -285,129 +446,21 @@ At ` ./schemas/event-listeners/id/client` add this file:
 At ` ./events/src/id/` add this file:
 - [client.yml](schemas/client.yml)
 
-Finally, create or update `./.nycrc` to avoid coverage leaks:
-```
+### Tests and coverage
+
+The _default_ Api and Listeners (:warning: without customization) not need to be tested.
+
+To avoid coverage leaks, in `./.nycrc`
+
+```json
 {
   "exclude": [
-    //... your files
-    "src/event-listeners/id/client/created.js",
-    "src/event-listeners/id/client/updated.js",
-    "src/event-listeners/id/client/removed.js",
+    //... other excluded files
+    "src/event-listeners/id/client/",
     "src/models/client.js",
     "src/api/client/post.js"
   ]
 }
 ```
 
-:warning: If exists any customization of the files, do not add the file to the .nycrc and add the corresponding tests.
-
-### Hooks
-The `APICreate` and `listeners` have a hook for post processing the client or clients created data.
-
-#### APICreate
-
-#### `postSaveHook(clientCodes, clients)`
-Receives the clientCodes and clients from the API.
-
-Parameters:
-- clientCodes `string Array`: The client created codes.
-- clients `object Array`: The clients created objects that were saved.
-
-##### Example
-```js
-'use strict';
-const { APICreate } = require('@janiscommerce/client-creator');
-
-class ClientCreateAPI extends APICreate {
-
-  async postSaveHook(clientCodes, clients) {
-
-      await myPostSaveMethod(clientCodes);
-
-      clientCodes.forEach(clientCode => {
-          console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
-      })
-
-      clients.forEach(({ databases, status }) => {
-        console.log(`This epic client has ${databases.length} databases and its status is ${status}`)
-      })
-    }
-}
-
-module.exports = ClientCreateAPI;
-```
-
-#### Listener Created
-#### `postSaveHook(clientCode, client)`
-Receives the clientCode and client from the event.
-
-Parameters:
-- clientCode `string`: The client created code of the created client.
-- client `object`: The client created object that was saved.
-
-It can be implemented as the example bellow:
-##### Example
-```js
-'use strict';
-const { ServerlessHandler } = require('@janiscommerce/event-listener');
-const { ListenerCreated } = require('@janiscommerce/client-creator');
-
-class ClientCreateListener extends ListenerCreated {
-
-  async postSaveHook(clientCode, client) {
-    console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
-    console.log(`Saved client has ${client.databases.length} databases! Whoaaa`)
-  }
-}
-
-module.exports.handler = (...args) => ServerlessHandler.handle(ClientCreateListener, ...args);
-```
-
-#### Listener Updated
-#### `postSaveHook(currentClient)`
-Receives the currentClient from the event.
-
-Parameters:
-- currentClient `object`: The recently updated client.
-
-It can be implemented as the example bellow:
-##### Example
-```js
-'use strict';
-const { ServerlessHandler } = require('@janiscommerce/event-listener');
-const { ListenerUpdated } = require('@janiscommerce/client-creator');
-
-class ClientUpdateListener extends ListenerUpdated {
-
-  async postSaveHook(currentClient) {
-    console.log(`Saved client ${currentClient.name}, now i'm gonna do something great`);
-  }
-}
-
-module.exports.handler = (...args) => ServerlessHandler.handle(ClientUpdateListener, ...args);
-```
-
-#### Listener Removed
-#### `postRemovedHook(clientCode)`
-Receives the removed clientCode from the API.
-
-Parameters:
-- clientCode `string`: The client removed code.
-
-It can be implemented as the example bellow:
-
-##### Example
-```js
-'use strict';
-const { ServerlessHandler } = require('@janiscommerce/event-listener');
-const { ListenerRemoved } = require('@janiscommerce/client-creator');
-
-class ClientRemovedListener extends ListenerRemoved {
-
-  async postRemovedHook(clientCode) {
-    console.log(`Saved client ${clientCode}, now i'm gonna do something great`);
-  }
-}
-
-module.exports.handler = (...args) => ServerlessHandler.handle(ClientRemovedListener, ...args);
-```
+> :warning: If exists any customization of the files, do not add the file to the .nycrc and add the corresponding tests.

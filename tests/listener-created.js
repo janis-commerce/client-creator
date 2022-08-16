@@ -59,7 +59,7 @@ describe('Client Created Listener', async () => {
 
 	const assertGetIDClients = sinon => {
 		sinon.assert.calledOnceWithExactly(Invoker.serviceCall, 'id', 'GetClient', {
-			filters: { clientCode: [validEvent.id] },
+			filters: { code: [validEvent.id] },
 			limit: 1
 		});
 	};
