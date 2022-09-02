@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.4.1] - 2022-09-02
+### Changed
+- Added debugging loggers for create, update and remove clients
+
 ## [5.4.0] - 2022-08-16
 ### Added
 - **ApiCreate** _optional_ parameter `processClients` to create, update or remove clients
