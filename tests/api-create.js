@@ -532,7 +532,12 @@ describe('Client Create API', () => {
 			{
 				description: 'Should create clients when not found in service',
 				request: { data: { processClients: true } },
-				response: { code: 200 },
+				response: {
+					code: 200,
+					body: {
+						createdClients: idClients.map(({ code }) => code)
+					}
+				},
 				before: sinon => {
 
 					delete ClientFormatter.settings;
@@ -577,7 +582,12 @@ describe('Client Create API', () => {
 			}, {
 				description: 'Should update clients when found in service',
 				request: { data: { processClients: true } },
-				response: { code: 200 },
+				response: {
+					code: 200,
+					body: {
+						updatedClients: ['client-a', 'client-b']
+					}
+				},
 				before: sinon => {
 
 					delete ClientFormatter.settings;
@@ -625,7 +635,12 @@ describe('Client Create API', () => {
 			}, {
 				description: 'Should remove clients when not found in service',
 				request: { data: { processClients: true } },
-				response: { code: 200 },
+				response: {
+					code: 200,
+					body: {
+						removedClients: ['extra-client-a', 'extra-client-b']
+					}
+				},
 				before: sinon => {
 
 					delete ClientFormatter.settings;

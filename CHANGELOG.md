@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.4.2] - 2022-09-02
+### Added
+- **ApiCreate** Added response body with process resume when `processClients` para was received
+
 ## [5.4.1] - 2022-09-02
 ### Changed
 - Added debugging loggers for create, update and remove clients
