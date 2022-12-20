@@ -42,15 +42,15 @@
     "test": "tests"
   },
   "dependencies": {
-    "@janiscommerce/api": "^6.5.2",
+    "@janiscommerce/api": "^6.6.1",
     "@janiscommerce/api-session": "^3.3.1",
     "@janiscommerce/aws-secrets-manager": "^0.2.1",
-    "@janiscommerce/event-listener": "^3.0.1",
-    "@janiscommerce/lambda": "^3.7.2",
-    "@janiscommerce/model": "^6.6.2",
+    "@janiscommerce/event-listener": "^3.1.0",
+    "@janiscommerce/lambda": "^4.1.1",
+    "@janiscommerce/model": "^6.8.2",
     "@janiscommerce/mongodb-index-creator": "^2.5.0",
     "@janiscommerce/settings": "^1.0.1",
-    "@janiscommerce/superstruct": "^1.2.0",
+    "@janiscommerce/superstruct": "^1.2.1",
     "lllog": "^1.1.2"
   }
 }
