@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.4.4] - 2023-01-09
+### Fixed
+- Client `ListenerRemoved` fixed response
+
+### Changed
+- Updated `@janiscommerce/lambda` to **v5**
+- Updated `@janiscommerce/mongodb-index-creator` to **v3**
+
 ## [5.4.3] - 2022-12-20
 ### Changed
 - Updated `@janiscommerce/lambda` dependency to **v4**
