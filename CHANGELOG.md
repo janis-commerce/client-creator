@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.4.5] - 2023-03-14
+### Changed
+- **Client Creation**. When `admin` config is missing on Databases, the config is now copied from `write`
+
 ## [5.4.4] - 2023-01-09
 ### Fixed
 - Client `ListenerRemoved` fixed response

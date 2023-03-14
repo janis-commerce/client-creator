@@ -11,10 +11,21 @@ module.exports = (code, addSecureData = false, addDB = true) => ({
 				host: 'database-host',
 				database: `janis-${code}`,
 				someLimit: 10
+			},
+			admin: {
+				skipFetchCredentials: true,
+				host: 'database-host',
+				database: `janis-${code}`,
+				someLimit: 10
 			}
 		},
 		onlyWriteDB: {
 			write: {
+				skipFetchCredentials: true,
+				host: 'write-database-host',
+				database: `janis-write-${code}`
+			},
+			admin: {
 				skipFetchCredentials: true,
 				host: 'write-database-host',
 				database: `janis-write-${code}`
@@ -30,10 +41,23 @@ module.exports = (code, addSecureData = false, addDB = true) => ({
 				skipFetchCredentials: true,
 				host: 'complete-read-database-host',
 				database: `janis-complete-read-${code}`
+			},
+			admin: {
+				skipFetchCredentials: true,
+				host: 'complete-write-database-host',
+				database: `janis-complete-write-${code}`
 			}
 		},
 		secureDB: {
 			write: {
+				database: `secure-${code}`,
+				...addSecureData && {
+					host: 'secure-host',
+					user: 'secure-user',
+					password: 'secure-password'
+				}
+			},
+			admin: {
 				database: `secure-${code}`,
 				...addSecureData && {
 					host: 'secure-host',

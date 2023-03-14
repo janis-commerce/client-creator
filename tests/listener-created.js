@@ -403,11 +403,8 @@ describe('Client Created Listener', async () => {
 				stubGetSecret(sinon, {
 					databases: {
 						secureDB: {
-							write: {
-								host: 'secure-host',
-								user: 'secure-user',
-								password: 'secure-password'
-							}
+							write: { host: 'secure-host', user: 'secure-user', password: 'secure-password' },
+							admin: { host: 'secure-host', user: 'secure-user', password: 'secure-password' }
 						}
 					}
 				});
