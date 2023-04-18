@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [6.0.0] - 2023-04-18
+### Changed
+- Update [@janiscommerce/api](https://www.npmjs.com/package/@janiscommerce/api) to version 7xx
+- Update [@janiscommerce/aws-secrets-manager](https://www.npmjs.com/package/@janiscommerce/aws-secrets-manager) to version 1xx
+- Update [@janiscommerce/lambda](https://www.npmjs.com/package/@janiscommerce/lambda) to version 6xx
+- Update [@janiscommerce/model](https://www.npmjs.com/package/@janiscommerce/model) to version 7xx
+- Update [@janiscommerce/mongodb-index-creator](https://www.npmjs.com/package/@janiscommerce/mongodb-index-creator) to version 4xx
+
 ## [5.4.5] - 2023-03-14
 ### Changed
 - **Client Creation**. When `admin` config is missing on Databases, the config is now copied from `write`
