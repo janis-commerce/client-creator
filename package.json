@@ -24,16 +24,16 @@
   "license": "ISC",
   "homepage": "https://github.com/janis-commerce/client-creator.git#readme",
   "devDependencies": {
-    "@janiscommerce/api-test": "^4.2.1",
+    "@janiscommerce/api-test": "^5.0.0",
     "@janiscommerce/event-listener-test": "^3.0.0",
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^13.2.0",
     "eslint-plugin-import": "^2.22.1",
     "husky": "^8.0.1",
-    "mocha": "^8.4.0",
+    "mocha": "^10.2.0",
     "mock-require": "^3.0.3",
     "nyc": "^15.1.0",
-    "sinon": "^14.0.0"
+    "sinon": "^15.0.3"
   },
   "files": [
     "lib/"
@@ -42,13 +42,13 @@
     "test": "tests"
   },
   "dependencies": {
-    "@janiscommerce/api": "^6.6.1",
+    "@janiscommerce/api": "^7.0.0",
     "@janiscommerce/api-session": "^3.3.1",
-    "@janiscommerce/aws-secrets-manager": "^0.2.1",
+    "@janiscommerce/aws-secrets-manager": "^1.0.2",
     "@janiscommerce/event-listener": "^3.1.0",
-    "@janiscommerce/lambda": "^5.0.1",
-    "@janiscommerce/model": "^6.8.2",
-    "@janiscommerce/mongodb-index-creator": "^3.0.1",
+    "@janiscommerce/lambda": "^6.0.2",
+    "@janiscommerce/model": "^7.0.0",
+    "@janiscommerce/mongodb-index-creator": "^4.0.0",
     "@janiscommerce/settings": "^1.0.1",
     "@janiscommerce/superstruct": "^1.2.1",
     "lllog": "^1.1.2"
