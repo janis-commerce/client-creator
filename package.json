@@ -45,7 +45,7 @@
     "@janiscommerce/api": "^7.0.0",
     "@janiscommerce/api-session": "^3.3.1",
     "@janiscommerce/aws-secrets-manager": "^1.0.2",
-    "@janiscommerce/event-listener": "^3.1.0",
+    "@janiscommerce/event-listener": "^4.0.0",
     "@janiscommerce/lambda": "^6.0.2",
     "@janiscommerce/model": "^7.0.0",
     "@janiscommerce/mongodb-index-creator": "^4.0.0",
