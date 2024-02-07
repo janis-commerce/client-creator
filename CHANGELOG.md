@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Using **Devops** to find Databases information
+- Using new format `databasesCredentials` from Service Secret
+- Getter `useLegacyClients` to create or ignore "legacy clients"
+
+### Removed
+- **Api Create** parameter `processClients`
+
 ## [7.0.0] - 2023-09-18
 ### Changed
 - Update [@janiscommerce/api](https://www.npmjs.com/package/@janiscommerce/api) to version 8xx
