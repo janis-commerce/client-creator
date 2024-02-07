@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-
-## [6.0.0] - 2023-04-18
+## [7.0.0] - 2023-09-18
 ### Changed
 - Update [@janiscommerce/api](https://www.npmjs.com/package/@janiscommerce/api) to version 8xx
 - Update [@janiscommerce/event-listener](https://www.npmjs.com/package/@janiscommerce/event-listener) to version 5xx
