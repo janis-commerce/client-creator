@@ -4,6 +4,7 @@ const { ModelClient } = require('../../lib');
 
 module.exports = (code, addSecureData = false, addDB = true) => ({
 	code,
+	status: ModelClient.statuses.active,
 	databases: addDB ? {
 		default: {
 			write: {
@@ -66,6 +67,5 @@ module.exports = (code, addSecureData = false, addDB = true) => ({
 				}
 			}
 		}
-	} : {},
-	status: ModelClient.statuses.active
+	} : {}
 });

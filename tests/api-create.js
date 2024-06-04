@@ -2,7 +2,7 @@
 
 require('lllog')('none');
 
-const APITest = require('@janiscommerce/api-test');
+const ApiTest = require('@janiscommerce/api-test');
 const Settings = require('@janiscommerce/settings');
 
 const { Invoker } = require('@janiscommerce/lambda');
@@ -16,8 +16,7 @@ const {
 	secretThrows,
 	getValueRejects,
 	assertSecretsGet,
-	secretsNotCalled,
-	setEnv
+	secretsNotCalled
 } = require('./helpers/secrets-functions');
 
 const {
@@ -30,58 +29,98 @@ const ClientFormatter = require('../lib/helpers/client-formatter');
 
 const fakeDBSettings = require('./helpers/fake-db-settings');
 const prepareFakeClient = require('./helpers/prepare-fake-client');
+const { setJanisServiceName, setEnv, restoreEnvs } = require('./helpers/utils');
 
-describe('Client Create API', () => {
+describe.only('Client Create API', () => {
 
-	const clients = ['client-a', 'client-b'];
+	const clientCodes = ['client-a', 'client-b'];
 
-	const idClients = clients.map(code => prepareFakeClient(code, false, false));
-	const clientsToSave = clients.map(code => prepareFakeClient(code));
+	const idClients = clientCodes.map(code => prepareFakeClient(code, false, false));
+	const clientsToSave = clientCodes.map(code => prepareFakeClient(code));
 
-	const clientsToSaveWithAdditionalFields = [
-		{ ...clientsToSave[0], extraField: 'some-data' },
-		{ ...clientsToSave[1], extraField: 0 }
-	];
+	const service = {
+		id: '65c4e5a304b7c5b6113b196a',
+		code: 'my-service',
+		clientDatabases: [{
+			databaseKey: 'default',
+			newClientsDatabase: '65c4e5c25176c8137df7d2e1'
+		}]
+	};
 
 	const janisServiceName = 'some-service-name';
-	process.env.JANIS_SERVICE_NAME = janisServiceName;
+	const env = 'test';
 
-	const getIDClientsResolves = (sinon, items = [], statusCode = 200) => {
-		sinon.stub(Invoker, 'serviceCall')
-			.resolves(({ statusCode, payload: { items } }));
+	const getResolves = (sinon, {
+		clients,
+		currentClients,
+		serviceFromDevops
+	}) => {
+
+		const serviceCallStub = sinon.stub(Invoker, 'serviceCall');
+
+		serviceCallStub
+			.onFirstCall()
+			.resolves({ statusCode: 200, payload: { items: clients } });
+
+		if(serviceFromDevops) {
+			serviceCallStub
+				.onSecondCall()
+				.resolves({ statusCode: 200, payload: { items: [serviceFromDevops] } });
+		}
+
+		if(currentClients)
+			sinon.stub(ModelClient.prototype, 'get').resolves(currentClients);
 	};
 
 	const assertGetIDClients = sinon => {
-		sinon.assert.calledOnceWithExactly(Invoker.serviceCall, 'id', 'GetClient', {
-			filters: { code: clients },
+		sinon.assert.calledWithExactly(Invoker.serviceCall, 'id', 'GetClient', {
+			filters: { code: clientCodes },
 			limit: 2
 		});
 	};
 
-	const getClientsResolves = (sinon, items) => {
-		sinon.stub(ModelClient.prototype, 'get')
-			.resolves(items.map(([id, code, status]) => ({ id, code, status })));
+	const assertGetCurrentClients = sinon => {
+		sinon.assert.calledOnceWithExactly(ModelClient.prototype.get, {
+			fields: ['code', 'databasesCredentials'],
+			filters: { code: clientCodes },
+			limit: clientCodes.length
+		});
+	};
+
+	const assertGetService = sinon => {
+		sinon.assert.calledWithExactly(Invoker.serviceCall, 'devops', 'GetService', {
+			fields: ['id', 'code', 'clientDatabases'],
+			filters: { code: janisServiceName },
+			limit: 1
+		});
 	};
 
 	context('When valid clients received', () => {
-		APITest(APICreate, '/api/client', [
+		ApiTest(APICreate, '/api/client', [
 			{
-				description: 'Should save all the received new clients to clients DB',
+				description: 'Should create/update the received clients in service core clients database',
 				request: {
-					data: { clients }
+					data: { clients: clientCodes }
 				},
 				response: { code: 200 },
+				only: 1,
 				before: sinon => {
-
-					delete ClientFormatter.settings;
 
 					mockModelClient();
 
+					getResolves(sinon, {
+						clients: idClients,
+						currentClients: idClients,
+						serviceFromDevops: service
+					});
+
 					sinon.stub(Settings, 'get').returns(fakeDBSettings);
 
-					setEnv();
+					setJanisServiceName(janisServiceName);
 
-					stubGetSecret(sinon);
+					setEnv(env);
+
+					stubGetSecret(sinon); // not secret
 
 					sinon.stub(ModelClient.prototype, 'multiSave')
 						.resolves(true);
@@ -94,31 +133,38 @@ describe('Client Create API', () => {
 				},
 				after: (res, sinon) => {
 
+					assertGetCurrentClients(sinon);
+					assertGetIDClients(sinon);
+					assertGetService(sinon);
+
 					assertSecretsGet(sinon, janisServiceName);
 
 					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
 					sinon.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
-					sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, clients, clientsToSave);
+					sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, clientCodes, clientsToSave);
 
 					stopMock();
+
+					restoreEnvs();
+
+					ClientFormatter.restore();
 				}
 			}, {
 				description: 'Should save all the received new clients to clients DB when no settings found in file',
 				request: {
-					data: { clients }
+					data: { clients: clientCodes }
 				},
 				response: { code: 200 },
 				before: sinon => {
 
-					delete ClientFormatter.settings;
 
 					mockModelClient();
 
 					sinon.stub(Settings, 'get')
 						.returns();
 
-					setEnv();
+					setEnv(env);
 
 					stubGetSecret(sinon);
 
@@ -135,14 +181,14 @@ describe('Client Create API', () => {
 
 					secretsNotCalled(sinon);
 
-					const expectedClientsToSave = clients.map(code => prepareFakeClient(code, false, false));
+					const expectedClientsToSave = clientCodes.map(code => prepareFakeClient(code, false, false));
 
 					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, expectedClientsToSave);
 					sinon.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
 					sinon.assert.calledOnceWithExactly(
 						APICreate.prototype.postSaveHook,
-						clients,
+						clientCodes,
 						expectedClientsToSave
 					);
 
@@ -151,18 +197,17 @@ describe('Client Create API', () => {
 			}, {
 				description: 'Should save clients after fetching database credentials',
 				request: {
-					data: { clients }
+					data: { clients: clientCodes }
 				},
 				response: { code: 200 },
 				before: sinon => {
 
-					delete ClientFormatter.settings;
 
 					mockModelClient();
 
 					sinon.stub(Settings, 'get').returns(fakeDBSettings);
 
-					setEnv();
+					setEnv(env);
 
 					stubGetSecret(sinon, {
 						databases: {
@@ -186,19 +231,18 @@ describe('Client Create API', () => {
 
 					assertSecretsGet(sinon, janisServiceName);
 
-					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clients.map(code => prepareFakeClient(code, true)));
+					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientCodes.map(code => prepareFakeClient(code, true)));
 
 					stopMock();
 				}
 			}, {
 				description: 'Should skip fetching credentials if environment is local',
 				request: {
-					data: { clients }
+					data: { clients: clientCodes }
 				},
 				response: { code: 200 },
 				before: sinon => {
 
-					delete ClientFormatter.settings;
 
 					mockModelClient();
 
@@ -227,18 +271,17 @@ describe('Client Create API', () => {
 			}, {
 				description: 'Should save clients when SecretsManager throws an Error',
 				request: {
-					data: { clients }
+					data: { clients: clientCodes }
 				},
 				response: { code: 200 },
 				before: sinon => {
 
-					delete ClientFormatter.settings;
 
 					mockModelClient();
 
 					sinon.stub(Settings, 'get').returns(fakeDBSettings);
 
-					setEnv();
+					setEnv(env);
 
 					secretThrows(sinon);
 
@@ -258,18 +301,17 @@ describe('Client Create API', () => {
 			}, {
 				description: 'Should save clients when SecretsManager getValue rejects',
 				request: {
-					data: { clients }
+					data: { clients: clientCodes }
 				},
 				response: { code: 200 },
 				before: sinon => {
 
-					delete ClientFormatter.settings;
 
 					mockModelClient();
 
 					sinon.stub(Settings, 'get').returns(fakeDBSettings);
 
-					setEnv();
+					setEnv(env);
 
 					getValueRejects(sinon);
 
@@ -289,402 +331,10 @@ describe('Client Create API', () => {
 			}
 		]);
 
-		context('When model has additionalFields', () => {
-			APITest(APICreate, '/api/client', [
-				{
-					description: 'Should save all the received new clients to clients DB including additional fields',
-					request: {
-						data: { clients }
-					},
-					response: { code: 200 },
-					before: sinon => {
-
-						delete ClientFormatter.settings;
-
-						mockModelClient();
-
-						sinon.stub(ModelClient, 'additionalFields')
-							.get(() => ['extraField']);
-
-						sinon.stub(Settings, 'get').returns(fakeDBSettings);
-
-						setEnv();
-
-						stubGetSecret(sinon);
-
-						getIDClientsResolves(sinon, clientsToSaveWithAdditionalFields);
-
-						sinon.stub(ModelClient.prototype, 'multiSave')
-							.resolves(true);
-
-						sinon.stub(Invoker, 'call')
-							.resolves();
-
-						sinon.spy(APICreate.prototype, 'postSaveHook');
-
-					},
-					after: (res, sinon) => {
-
-						assertSecretsGet(sinon, janisServiceName);
-
-						assertGetIDClients(sinon);
-
-						sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSaveWithAdditionalFields);
-						sinon.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
-
-						sinon.assert.calledOnceWithExactly(
-							APICreate.prototype.postSaveHook,
-							clients,
-							clientsToSaveWithAdditionalFields
-						);
-
-						stopMock();
-					}
-				}
-			]);
-		});
-
-		describe('JanisID responses', () => {
-			APITest(APICreate, '/api/client', [
-				{
-					description: 'Should return 200 when can\'t get clients in ID Service',
-					request: {
-						data: { clients }
-					},
-					response: { code: 200 },
-					before: sinon => {
-
-						delete ClientFormatter.settings;
-
-						mockModelClient();
-
-						sinon.stub(ModelClient, 'additionalFields')
-							.get(() => ['extraField']);
-
-						sinon.stub(Settings, 'get').returns(fakeDBSettings);
-
-						setEnv();
-
-						stubGetSecret(sinon);
-
-						getIDClientsResolves(sinon, [], 400);
-
-						sinon.spy(ModelClient.prototype, 'multiSave');
-						sinon.spy(Invoker, 'call');
-						sinon.spy(APICreate.prototype, 'postSaveHook');
-
-					},
-					after: (res, sinon) => {
-
-						secretsNotCalled(sinon);
-
-						assertGetIDClients(sinon);
-
-						sinon.assert.notCalled(ModelClient.prototype.multiSave);
-						sinon.assert.notCalled(Invoker.call);
-						sinon.assert.notCalled(APICreate.prototype.postSaveHook);
-
-						stopMock();
-					}
-				}, {
-					description: 'Should save only found clients when can\'t get all clients from ID service',
-					request: {
-						data: { clients }
-					},
-					response: { code: 200 },
-					before: sinon => {
-
-						delete ClientFormatter.settings;
-
-						mockModelClient();
-
-						sinon.stub(ModelClient, 'additionalFields')
-							.get(() => ['extraField']);
-
-						sinon.stub(Settings, 'get').returns(fakeDBSettings);
-
-						setEnv();
-
-						stubGetSecret(sinon);
-
-						getIDClientsResolves(sinon, [clientsToSave[0]]);
-
-						sinon.stub(ModelClient.prototype, 'multiSave')
-							.resolves(true);
-
-						sinon.stub(Invoker, 'call')
-							.resolves();
-
-						sinon.spy(APICreate.prototype, 'postSaveHook');
-
-					},
-					after: (res, sinon) => {
-
-						assertSecretsGet(sinon, janisServiceName);
-
-						assertGetIDClients(sinon);
-
-						sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [clientsToSave[0]]);
-						sinon.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
-
-						sinon.assert.calledOnceWithExactly(
-							APICreate.prototype.postSaveHook,
-							clients,
-							[clientsToSave[0]]
-						);
-
-						stopMock();
-					}
-				}, {
-					description: 'Should return 200 when not found any clients in ID Service',
-					request: {
-						data: { clients }
-					},
-					response: { code: 200 },
-					before: sinon => {
-
-						delete ClientFormatter.settings;
-
-						mockModelClient();
-
-						sinon.stub(ModelClient, 'additionalFields')
-							.get(() => ['extraField']);
-
-						sinon.stub(Settings, 'get').returns(fakeDBSettings);
-
-						setEnv();
-
-						stubGetSecret(sinon);
-
-						getIDClientsResolves(sinon);
-
-						sinon.spy(ModelClient.prototype, 'multiSave');
-						sinon.spy(Invoker, 'call');
-						sinon.spy(APICreate.prototype, 'postSaveHook');
-
-					},
-					after: (res, sinon) => {
-
-						secretsNotCalled(sinon);
-
-						assertGetIDClients(sinon);
-
-						sinon.assert.notCalled(ModelClient.prototype.multiSave);
-						sinon.assert.notCalled(Invoker.call);
-						sinon.assert.notCalled(APICreate.prototype.postSaveHook);
-
-						stopMock();
-					}
-				}, {
-					description: 'Should return 500 when fails getting clients from ID Service',
-					request: {
-						data: { clients }
-					},
-					response: {
-						code: 500,
-						body: { message: 'Failed to get Janis ID clients' }
-					},
-					before: sinon => {
-
-						delete ClientFormatter.settings;
-
-						mockModelClient();
-
-						sinon.stub(ModelClient, 'additionalFields')
-							.get(() => ['extraField']);
-
-						sinon.stub(Settings, 'get').returns(fakeDBSettings);
-
-						setEnv();
-
-						stubGetSecret(sinon);
-
-						getIDClientsResolves(sinon, null, 500);
-
-						sinon.spy(ModelClient.prototype, 'multiSave');
-						sinon.spy(Invoker, 'call');
-						sinon.spy(APICreate.prototype, 'postSaveHook');
-
-					},
-					after: (res, sinon) => {
-
-						secretsNotCalled(sinon);
-
-						assertGetIDClients(sinon);
-
-						sinon.assert.notCalled(ModelClient.prototype.multiSave);
-						sinon.assert.notCalled(Invoker.call);
-						sinon.assert.notCalled(APICreate.prototype.postSaveHook);
-
-						stopMock();
-					}
-				}
-			]);
-		});
-
-	});
-
-	context('When processClients parameter received', () => {
-		APITest(APICreate, '/api/client', [
-			{
-				description: 'Should create clients when not found in service',
-				request: { data: { processClients: true } },
-				response: {
-					code: 200,
-					body: {
-						createdClients: idClients.map(({ code }) => code)
-					}
-				},
-				before: sinon => {
-
-					delete ClientFormatter.settings;
-
-					mockModelClient();
-
-					sinon.stub(Settings, 'get').returns(fakeDBSettings);
-
-					setEnv();
-
-					stubGetSecret(sinon);
-
-					getClientsResolves(sinon, []);
-
-					getIDClientsResolves(sinon, idClients);
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves(true);
-
-					sinon.stub(Invoker, 'call')
-						.resolves();
-
-					sinon.spy(APICreate.prototype, 'postSaveHook');
-					sinon.spy(APICreate.prototype, 'postUpdateHook');
-					sinon.spy(APICreate.prototype, 'postRemoveHook');
-
-				},
-				after: (res, sinon) => {
-
-					assertSecretsGet(sinon, janisServiceName);
-
-					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, clientsToSave);
-					sinon.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
-
-					sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, clients, clientsToSave);
-
-					sinon.assert.notCalled(APICreate.prototype.postUpdateHook);
-					sinon.assert.notCalled(APICreate.prototype.postRemoveHook);
-
-					stopMock();
-				}
-			}, {
-				description: 'Should update clients when found in service',
-				request: { data: { processClients: true } },
-				response: {
-					code: 200,
-					body: {
-						updatedClients: ['client-a', 'client-b']
-					}
-				},
-				before: sinon => {
-
-					delete ClientFormatter.settings;
-
-					mockModelClient();
-
-					sinon.stub(Settings, 'get').returns(fakeDBSettings);
-
-					setEnv();
-
-					getClientsResolves(sinon, [
-						['62f65ac3414d5da1e0f2bc5e', 'client-a', ModelClient.statuses.active],
-						['62f65ad8b07cd614cdc9a0ed', 'client-b', ModelClient.statuses.active]
-					]);
-
-					getIDClientsResolves(sinon, idClients);
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves(true);
-
-					sinon.spy(APICreate.prototype, 'postSaveHook');
-					sinon.spy(APICreate.prototype, 'postUpdateHook');
-					sinon.spy(APICreate.prototype, 'postRemoveHook');
-				},
-				after: (res, sinon) => {
-
-					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [{
-						code: 'client-a', status: ModelClient.statuses.active
-					}, {
-						code: 'client-b', status: ModelClient.statuses.active
-					}]);
-
-					sinon.assert.notCalled(APICreate.prototype.postSaveHook);
-
-					sinon.assert.calledOnceWithExactly(APICreate.prototype.postUpdateHook, [{
-						code: 'client-a', databases: {}, status: ModelClient.statuses.active
-					}, {
-						code: 'client-b', databases: {}, status: ModelClient.statuses.active
-					}]);
-
-					sinon.assert.notCalled(APICreate.prototype.postRemoveHook);
-
-					stopMock();
-				}
-			}, {
-				description: 'Should remove clients when not found in service',
-				request: { data: { processClients: true } },
-				response: {
-					code: 200,
-					body: {
-						removedClients: ['extra-client-a', 'extra-client-b']
-					}
-				},
-				before: sinon => {
-
-					delete ClientFormatter.settings;
-
-					mockModelClient();
-
-					sinon.stub(Settings, 'get').returns(fakeDBSettings);
-
-					setEnv();
-
-					getClientsResolves(sinon, [
-						['62f65ac3414d5da1e0f2bc5e', 'extra-client-a', ModelClient.statuses.active],
-						['62f65ad8b07cd614cdc9a0ed', 'extra-client-b', ModelClient.statuses.active]
-					]);
-
-					getIDClientsResolves(sinon, []);
-
-					sinon.stub(Model.prototype, 'dropDatabase')
-						.resolves(true);
-
-					sinon.stub(ModelClient.prototype, 'multiRemove')
-						.resolves(true);
-
-					sinon.spy(APICreate.prototype, 'postSaveHook');
-					sinon.spy(APICreate.prototype, 'postUpdateHook');
-					sinon.spy(APICreate.prototype, 'postRemoveHook');
-				},
-				after: (res, sinon) => {
-
-					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiRemove, {
-						code: ['extra-client-a', 'extra-client-b']
-					});
-
-					sinon.assert.notCalled(APICreate.prototype.postSaveHook);
-
-					sinon.assert.notCalled(APICreate.prototype.postUpdateHook);
-
-					sinon.assert.calledOnceWithExactly(APICreate.prototype.postRemoveHook, ['extra-client-a', 'extra-client-b']);
-
-					stopMock();
-				}
-			}
-		]);
 	});
 
 	context('When invalid payload received', () => {
-		APITest(APICreate, '/api/client', [
+		ApiTest(APICreate, '/api/client', [
 			{
 				description: 'Should return 400 when the received request data is invalid',
 				request: {
@@ -708,22 +358,21 @@ describe('Client Create API', () => {
 	});
 
 	describe('Errors', () => {
-		APITest(APICreate, '/api/client', [
+		ApiTest(APICreate, '/api/client', [
 			{
 				description: 'Should return 500 when the client model multiSave fails',
 				request: {
-					data: { clients }
+					data: { clients: clientCodes }
 				},
 				response: { code: 500 },
 				before: sinon => {
 
-					delete ClientFormatter.settings;
 
 					mockModelClient();
 
 					sinon.stub(Settings, 'get').returns(fakeDBSettings);
 
-					setEnv();
+					setEnv(env);
 
 					stubGetSecret(sinon);
 
@@ -745,18 +394,17 @@ describe('Client Create API', () => {
 			}, {
 				description: 'Should return 500 when invoking the index creator lambda fails',
 				request: {
-					data: { clients }
+					data: { clients: clientCodes }
 				},
 				response: { code: 500 },
 				before: sinon => {
 
-					delete ClientFormatter.settings;
 
 					mockModelClient();
 
 					sinon.stub(Settings, 'get').returns(fakeDBSettings);
 
-					setEnv();
+					setEnv(env);
 
 					stubGetSecret(sinon);
 
@@ -787,13 +435,12 @@ describe('Client Create API', () => {
 				},
 				before: sinon => {
 
-					delete ClientFormatter.settings;
 
 					wrongMockModelClient();
 
 					sinon.stub(Settings, 'get').returns(fakeDBSettings);
 
-					setEnv();
+					setEnv(env);
 
 					stubGetSecret(sinon);
 
