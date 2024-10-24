@@ -7,8 +7,6 @@ const Settings = require('@janiscommerce/settings');
 
 const { Invoker } = require('@janiscommerce/lambda');
 
-const Model = require('@janiscommerce/model');
-
 const { APICreate, ModelClient } = require('../lib');
 
 const {
