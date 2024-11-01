@@ -5,6 +5,7 @@ const { ModelClient } = require('../../lib');
 module.exports = (code, addSecureData = false, addDB = true) => ({
 	code,
 	status: ModelClient.statuses.active,
+	db: {},
 	databases: addDB ? {
 		default: {
 			write: {

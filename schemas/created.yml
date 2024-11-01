@@ -6,10 +6,10 @@ paths:
       tags:
         - Client
       summary: Client created event listener
+      description: Client created event listener
       security:
         - ApiKey: []
           ApiSecret: []
-      description: Client created event listener
       operationId: clientCreatedListener
       requestBody:
         required: true

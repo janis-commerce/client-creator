@@ -7,10 +7,10 @@ paths:
       tags:
         - Private
       summary: Client updated event listener
+      description: Client updated event listener
       security:
         - ApiKey: []
           ApiSecret: []
-      description: Client updated event listener
       operationId: clientUpdatedListener
       requestBody:
         required: true

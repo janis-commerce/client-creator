@@ -8,12 +8,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-- Using **Devops** to find Databases information
-- Using new format `databasesCredentials` from Service Secret
-- Getter `useLegacyClients` to create or ignore "legacy clients"
+- Using **AWS ParameterStore** to find Databases information
+- Using new format `db` from clients
+- Getter `useLegacyClients` to create "legacy clients" only when needed
+
+### Changed
+- _Internal_ GitHub actions improved
+- _Internal_ Updated to `node@18`
+
+### Deprecated
+- **AWS Secrets Manager** usage
+- **Settings** usage
 
 ### Removed
-- **Api Create** parameter `processClients`
+- **Api Create** parameter `processClients` and feature
 
 ## [7.0.0] - 2023-09-18
 ### Changed

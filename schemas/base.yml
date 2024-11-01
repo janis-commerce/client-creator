@@ -1,7 +1,5 @@
 components:
-
   schemas:
-
     Clients:
       description: The new clients to create
       type: object

@@ -51,16 +51,11 @@ const secretsNotCalled = sinon => {
 	sinon.assert.notCalled(SecretHandler.prototype.getValue);
 };
 
-const setEnv = env => {
-	process.env.JANIS_ENV = env;
-};
-
 module.exports = {
 	cleanCredentialsCache,
 	stubGetSecret,
 	secretThrows,
 	getValueRejects,
 	assertSecretsGet,
-	secretsNotCalled,
-	setEnv
+	secretsNotCalled
 };
