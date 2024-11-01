@@ -21,7 +21,7 @@ describe('ClientModel', () => {
 		});
 
 		it('Should return the exclude fields for logging', async () => {
-			assert.deepStrictEqual(ClientModel.excludeFieldsInLog, ['databases']);
+			assert.deepStrictEqual(ClientModel.excludeFieldsInLog, ['databases', 'db']);
 		});
 
 		it('Should return false when shouldCreateLogs', () => {

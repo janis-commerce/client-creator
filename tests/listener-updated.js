@@ -20,30 +20,16 @@ const ClientUpdated = (...args) => ServerlessHandler.handle(ListenerUpdated, ...
 describe('Client Updated Listener', async () => {
 
 	const validEvent = {
-		id: '62f5406ccb61cc1aaa8aeb39',
+		id: '5fc0f3bc617a1b3e98009c4c',
 		service: 'id',
 		entity: 'client',
 		event: 'updated'
 	};
 
 	const client = {
-		code: 'test1',
-		databases: {
-			default: {
-				write: {
-					type: 'mongodb',
-					protocol: 'mongodb+srv://',
-					user: 'user',
-					password: 'some-password',
-					host: 'somehost.mongodb.net/test?retryWrites=true&w=majority',
-					database: 'janis-fizzmodarg'
-				}
-			}
-		},
-		dateCreated: '2020-11-27T12:40:28.917Z',
-		dateModified: '2020-11-27T19:23:25.624Z',
-		status: 'inactive',
-		id: '5fc0f3bc617a1b3e98009c4c'
+		id: '5fc0f3bc617a1b3e98009c4c',
+		code: 'the-client',
+		status: ModelClient.statuses.active
 	};
 
 	const getIDClientsResolves = (sinon, clients = [], statusCode = 200) => {
@@ -59,242 +45,102 @@ describe('Client Updated Listener', async () => {
 	};
 
 	const assertSaveClient = (sinon, clientToSave) => {
-		sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [{
-			code: client.code,
-			...clientToSave
-		}]);
+		sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, [clientToSave]);
 	};
 
-	describe('Errors', async () => {
+	const getCurrentClientsResolves = (sinon, currentClients = []) => {
+		sinon.stub(ModelClient.prototype, 'get')
+			.resolves(currentClients);
+	};
 
-		await EventListenerTest(ClientUpdated, [
-			{
-				description: 'Should return 400 when the event has no ID',
-				event: {
-					...validEvent,
-					id: undefined
-				},
-				responseCode: 400
-			}, {
-				description: 'Should return 500 when client model fails updating the status',
-				event: validEvent,
-				before: sinon => {
+	await EventListenerTest(ClientUpdated, [
+		{
+			description: 'Should return 200 when client model updates the client status',
+			event: validEvent,
+			before: sinon => {
 
-					mockModelClient();
+				mockModelClient();
 
-					getIDClientsResolves(sinon, [client]);
+				getIDClientsResolves(sinon, [client]);
 
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.rejects();
+				getCurrentClientsResolves(sinon, [{
+					...client,
+					status: ModelClient.statuses.inactive
+				}]);
 
-					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sinon => {
+				sinon.stub(ModelClient.prototype, 'multiSave')
+					.resolves();
 
-					assertGetIDClients(sinon);
+				sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
+			},
+			after: sinon => {
 
-					assertSaveClient(sinon, { status: client.status });
+				assertGetIDClients(sinon);
 
-					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
+				assertSaveClient(sinon, {
+					code: client.code,
+					status: client.status
+				});
 
-					stopMock();
+				sinon.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, client);
 
-				},
-				responseCode: 500
-			}, {
-				description: 'Should return 500 and throw error when fails to getting the client',
-				event: validEvent,
-				before: sinon => {
+				stopMock();
 
-					mockModelClient();
+			},
+			responseCode: 200
+		}, {
+			description: 'Should return 500 and return when ID returns 400',
+			event: validEvent,
+			before: sinon => {
 
-					getIDClientsResolves(sinon, null, 500);
+				mockModelClient();
 
-					sinon.spy(ModelClient.prototype, 'update');
-					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sinon => {
+				getIDClientsResolves(sinon, null, 400);
 
-					assertGetIDClients(sinon);
+				sinon.spy(ModelClient.prototype, 'update');
+				sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
+			},
+			after: sinon => {
 
-					sinon.assert.notCalled(ModelClient.prototype.update);
-					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
+				assertGetIDClients(sinon);
 
-					stopMock();
+				sinon.assert.notCalled(ModelClient.prototype.update);
+				sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
 
-				},
-				responseCode: 500
-			}, {
-				description: 'Should return 500 when client model additional fields getter is invalid',
-				event: validEvent,
-				before: sinon => {
+				stopMock();
 
-					mockModelClient();
+			},
+			responseCode: 500
+		}, {
+			description: 'Should return 500 and return when could not find the client',
+			event: validEvent,
+			before: sinon => {
 
-					sinon.stub(ModelClient, 'additionalFields')
-						.get(() => 'not an array');
+				mockModelClient();
 
-					getIDClientsResolves(sinon, [client]);
+				getIDClientsResolves(sinon, []);
 
-					sinon.spy(ModelClient.prototype, 'update');
-					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sinon => {
+				sinon.spy(ModelClient.prototype, 'update');
+				sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
+			},
+			after: sinon => {
 
-					assertGetIDClients(sinon);
+				assertGetIDClients(sinon);
 
-					sinon.assert.notCalled(ModelClient.prototype.update);
-					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
+				sinon.assert.notCalled(ModelClient.prototype.update);
+				sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
 
-					stopMock();
+				stopMock();
 
-				},
-				responseCode: 500
-			}
-		]);
-	});
-
-	describe('200 response', async () => {
-
-		await EventListenerTest(ClientUpdated, [
-			{
-				description: 'Should return 200 and return when ID returns 400',
-				event: validEvent,
-				before: sinon => {
-
-					mockModelClient();
-
-					getIDClientsResolves(sinon, null, 400);
-
-					sinon.spy(ModelClient.prototype, 'update');
-					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sinon => {
-
-					assertGetIDClients(sinon);
-
-					sinon.assert.notCalled(ModelClient.prototype.update);
-					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
-
-					stopMock();
-
-				},
-				responseCode: 200
-			}, {
-				description: 'Should return 200 and return when could not find the client',
-				event: validEvent,
-				before: sinon => {
-
-					mockModelClient();
-
-					getIDClientsResolves(sinon, []);
-
-					sinon.spy(ModelClient.prototype, 'update');
-					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sinon => {
-
-					assertGetIDClients(sinon);
-
-					sinon.assert.notCalled(ModelClient.prototype.update);
-					sinon.assert.notCalled(ListenerUpdated.prototype.postSaveHook);
-
-					stopMock();
-
-				},
-				responseCode: 200
-			}, {
-				description: 'Should return 200 when client model updates the client status',
-				event: validEvent,
-				before: sinon => {
-
-					mockModelClient();
-
-					getIDClientsResolves(sinon, [client]);
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves();
-
-					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sinon => {
-
-					assertGetIDClients(sinon);
-
-					assertSaveClient(sinon, { status: client.status });
-
-					sinon.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, client);
-
-					stopMock();
-
-				},
-				responseCode: 200
-			}, {
-				description: 'Should return 200 when client model updates the client status using additional fields',
-				event: validEvent,
-				before: sinon => {
-
-					mockModelClient();
-
-					sinon.stub(ModelClient, 'additionalFields')
-						.get(() => ['extraField', 'anotherExtraField']);
-
-					getIDClientsResolves(sinon, [{
-						...client,
-						extraField: 'some-data',
-						anotherExtraField: 0,
-						randomField: 'other-data'
-					}]);
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves();
-
-					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sinon => {
-
-					assertGetIDClients(sinon);
-
-					const clientFieldsToUpdate = { extraField: 'some-data', anotherExtraField: 0 };
-
-					assertSaveClient(sinon, { ...clientFieldsToUpdate, status: client.status });
-
-					sinon.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, { ...client, ...clientFieldsToUpdate, randomField: 'other-data' });
-
-					stopMock();
-
-				},
-				responseCode: 200
-			}, {
-				description: 'Should return 200 and unset the additional fields that were removed in ID service',
-				event: validEvent,
-				before: sinon => {
-
-					mockModelClient();
-
-					sinon.stub(ModelClient, 'additionalFields')
-						.get(() => ['extraField']);
-
-					getIDClientsResolves(sinon, [{ ...client, randomField: 'other-data' }]);
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves();
-
-					sinon.spy(ListenerUpdated.prototype, 'postSaveHook');
-				},
-				after: sinon => {
-
-					assertGetIDClients(sinon);
-
-					assertSaveClient(sinon, { status: client.status, $unset: { extraField: '' } });
-
-					sinon.assert.calledOnceWithExactly(ListenerUpdated.prototype.postSaveHook, { ...client, randomField: 'other-data' });
-
-					stopMock();
-
-				},
-				responseCode: 200
-			}
-		]);
-	});
+			},
+			responseCode: 500
+		}, {
+			description: 'Should return 400 when the event has no ID',
+			event: {
+				...validEvent,
+				id: undefined
+			},
+			responseCode: 400
+		}
+	]);
 });

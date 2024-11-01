@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Using **AWS ParameterStore** to find Databases information
 - Using new format `db` from clients
-- Getter `useLegacyClients` to create "legacy clients" only when needed
 
 ### Changed
 - _Internal_ GitHub actions improved

@@ -32,7 +32,7 @@ const { setJanisServiceName, setEnv, restoreEnvs } = require('./helpers/utils');
 
 const { stubParameterNotFound, resetSSMMock, stubParameterResolves } = require('./helpers/parameter-store');
 
-describe.only('Client Create API', () => {
+describe('Client Create API', () => {
 
 	const clientCodes = ['client-a', 'client-b'];
 
@@ -86,8 +86,7 @@ describe.only('Client Create API', () => {
 	};
 
 	const stubMongoDBIndexCreator = sinon => {
-		sinon.stub(Invoker, 'call')
-			.withArgs('MongoDBIndexCreator')
+		sinon.stub(Invoker, 'call').withArgs('MongoDBIndexCreator')
 			.resolves();
 	};
 
@@ -143,8 +142,7 @@ describe.only('Client Create API', () => {
 								id: databaseId2,
 								database: `${serviceName}-${idClients[0].code}`
 							}
-						},
-						databases: {}
+						}
 					}, {
 						code: clientCodes[1],
 						status: idClients[1].status,
@@ -157,8 +155,7 @@ describe.only('Client Create API', () => {
 								id: databaseId2,
 								database: `${serviceName}-${idClients[1].code}`
 							}
-						},
-						databases: {}
+						}
 					}];
 
 					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
@@ -229,7 +226,6 @@ describe.only('Client Create API', () => {
 								database: `${serviceName}-the-client`
 							}
 						},
-						databases: {},
 						status: ModelClient.statuses.active
 					}];
 
@@ -304,7 +300,6 @@ describe.only('Client Create API', () => {
 								database: 'custom-db-name-for-the-client'
 							}
 						},
-						databases: {},
 						status: ModelClient.statuses.active
 					}];
 
@@ -373,7 +368,6 @@ describe.only('Client Create API', () => {
 								database: 'custom-db-name-for-the-client'
 							}
 						},
-						databases: {},
 						status: ModelClient.statuses.active
 					}];
 
@@ -651,6 +645,8 @@ describe.only('Client Create API', () => {
 				response: { code: 500 },
 				before: sinon => {
 
+					commonBeforeEach(sinon);
+
 					stubParameterNotFound();
 
 					mockModelClient();
@@ -684,6 +680,8 @@ describe.only('Client Create API', () => {
 				},
 				response: { code: 500 },
 				before: sinon => {
+
+					commonBeforeEach(sinon);
 
 					stubParameterNotFound();
 
@@ -721,6 +719,8 @@ describe.only('Client Create API', () => {
 					code: 500
 				},
 				before: sinon => {
+
+					commonBeforeEach(sinon);
 
 					stubParameterNotFound();
 

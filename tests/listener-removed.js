@@ -17,6 +17,7 @@ const ClientRemoved = (...args) => ServerlessHandler.handle(ListenerRemoved, ...
 describe('Client Removed Listener', async () => {
 
 	const client = {
+		id: '5fc0f3bc617a1b3e98009c4c',
 		code: 'test1',
 		databases: {
 			default: {
@@ -30,10 +31,7 @@ describe('Client Removed Listener', async () => {
 				}
 			}
 		},
-		dateCreated: '2020-11-27T12:40:28.917Z',
-		dateModified: '2020-11-27T19:23:25.624Z',
-		status: 'active',
-		id: '5fc0f3bc617a1b3e98009c4c'
+		status: ModelClient.statuses.active
 	};
 
 	const validEvent = {
@@ -44,7 +42,10 @@ describe('Client Removed Listener', async () => {
 	};
 
 	const assertClientGet = sinon => {
-		sinon.assert.calledOnceWithExactly(ModelClient.prototype.get, { filters: { code: [client.code] } });
+		sinon.assert.calledOnceWithExactly(ModelClient.prototype.get, {
+			filters: { code: [client.code] },
+			limit: 1
+		});
 	};
 
 	await EventListenerTest(ClientRemoved, [
@@ -56,7 +57,7 @@ describe('Client Removed Listener', async () => {
 			},
 			responseCode: 400
 		}, {
-			description: 'Should return 404 when client model could not found the client',
+			description: 'Should resolve when client model could not found the client (already removed)',
 			event: validEvent,
 			before: sinon => {
 
@@ -78,7 +79,7 @@ describe('Client Removed Listener', async () => {
 
 				stopMock();
 			},
-			responseCode: 404
+			responseCode: 200
 		}, {
 			description: 'Should return 500 when client model fails getting the client',
 			event: validEvent,
@@ -104,10 +105,9 @@ describe('Client Removed Listener', async () => {
 			},
 			responseCode: 500
 		}, {
-			description: 'Should return 500 when model default client fails to drop the database',
+			description: 'Should resolve when model fails to drop the database',
 			event: validEvent,
 			before: sinon => {
-
 
 				mockModelClient();
 
@@ -124,9 +124,9 @@ describe('Client Removed Listener', async () => {
 
 				stopMock();
 			},
-			responseCode: 500
+			responseCode: 200
 		}, {
-			description: 'Should return 500 when model default client fails removing the client',
+			description: 'Should return 500 when model fails removing the client',
 			event: validEvent,
 			before: sinon => {
 
