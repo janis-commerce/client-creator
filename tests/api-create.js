@@ -93,6 +93,23 @@ describe('Client Create API', () => {
 	const assertMongoDBIndexCreator = sinon => sinon.assert.calledOnceWithExactly(Invoker.call, 'MongoDBIndexCreator');
 
 	context('When AWS ParameterStore is used for db config', () => {
+
+		const beforeEachParameterStore = sinon => {
+			mockModelClient();
+			sinon.stub(Settings, 'get').returns({});
+			stubGetSecret(sinon); // secret {}
+
+			sinon.stub(ModelClient.prototype, 'multiSave')
+				.resolves(true);
+
+			stubMongoDBIndexCreator(sinon);
+		};
+
+		const afterEachParameterStore = sinon => {
+			assertSecretsGet(sinon, serviceName);
+			assertMongoDBIndexCreator(sinon);
+		};
+
 		ApiTest(APICreate, '/api/client', [
 			{
 				description: 'Should create clients using db config',
@@ -103,8 +120,7 @@ describe('Client Create API', () => {
 				before: sinon => {
 
 					commonBeforeEach(sinon);
-
-					mockModelClient();
+					beforeEachParameterStore(sinon);
 
 					getResolves(sinon, {
 						clients: clientCodes.map(code => prepareFakeClient(code, false, false))
@@ -113,22 +129,11 @@ describe('Client Create API', () => {
 					stubParameterResolves({
 						newClientsDatabases: { default: databaseId1, otherDb: databaseId2 }
 					});
-
-					sinon.stub(Settings, 'get').returns({});
-
-					stubGetSecret(sinon); // secret {}
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves(true);
-
-					stubMongoDBIndexCreator(sinon);
 				},
 				after: (res, sinon) => {
 
 					assertGetCurrentClients(sinon);
 					assertGetIDClients(sinon);
-
-					assertSecretsGet(sinon, serviceName);
 
 					const formattedClients = [{
 						code: clientCodes[0],
@@ -159,11 +164,11 @@ describe('Client Create API', () => {
 					}];
 
 					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
-					assertMongoDBIndexCreator(sinon);
 
 					sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, clientCodes, formattedClients);
 
 					commonAfterEach();
+					afterEachParameterStore(sinon);
 				}
 			}, {
 				description: 'Should update client and keep current config and add new one',
@@ -174,8 +179,7 @@ describe('Client Create API', () => {
 				before: sinon => {
 
 					commonBeforeEach(sinon);
-
-					mockModelClient();
+					beforeEachParameterStore(sinon);
 
 					const client = prepareFakeClient('the-client', false, false);
 
@@ -195,22 +199,11 @@ describe('Client Create API', () => {
 					stubParameterResolves({
 						newClientsDatabases: { default: databaseId1, newDB: databaseId3 }
 					});
-
-					sinon.stub(Settings, 'get').returns({});
-
-					stubGetSecret(sinon); // secret {}
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves(true);
-
-					stubMongoDBIndexCreator(sinon);
 				},
 				after: (res, sinon) => {
 
 					assertGetIDClients(sinon, ['the-client', 'not-found-in-id-client']);
 					assertGetCurrentClients(sinon, ['the-client']);
-
-					assertSecretsGet(sinon, serviceName);
 
 					const formattedClients = [{
 						code: 'the-client',
@@ -230,7 +223,6 @@ describe('Client Create API', () => {
 					}];
 
 					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
-					assertMongoDBIndexCreator(sinon);
 
 					sinon.assert.calledOnceWithExactly(
 						APICreate.prototype.postSaveHook,
@@ -239,6 +231,7 @@ describe('Client Create API', () => {
 					);
 
 					commonAfterEach();
+					afterEachParameterStore(sinon);
 				}
 			}, {
 				description: 'Should update client migrating old config to new one (databases[key].write)',
@@ -249,8 +242,7 @@ describe('Client Create API', () => {
 				before: sinon => {
 
 					commonBeforeEach(sinon);
-
-					mockModelClient();
+					beforeEachParameterStore(sinon);
 
 					const client = prepareFakeClient('the-client', false, false);
 
@@ -274,22 +266,11 @@ describe('Client Create API', () => {
 					stubParameterResolves({
 						newClientsDatabases: { default: databaseId1 }
 					});
-
-					sinon.stub(Settings, 'get').returns({});
-
-					stubGetSecret(sinon); // secret {}
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves(true);
-
-					stubMongoDBIndexCreator(sinon);
 				},
 				after: (res, sinon) => {
 
 					assertGetCurrentClients(sinon, ['the-client']);
 					assertGetIDClients(sinon, ['the-client']);
-
-					assertSecretsGet(sinon, serviceName);
 
 					const formattedClients = [{
 						code: 'the-client',
@@ -304,11 +285,11 @@ describe('Client Create API', () => {
 					}];
 
 					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
-					assertMongoDBIndexCreator(sinon);
 
 					sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, ['the-client'], formattedClients);
 
 					commonAfterEach();
+					afterEachParameterStore(sinon);
 				}
 			}, {
 				description: 'Should update client migrating oldest config to new one (databases[key])',
@@ -319,8 +300,7 @@ describe('Client Create API', () => {
 				before: sinon => {
 
 					commonBeforeEach(sinon);
-
-					mockModelClient();
+					beforeEachParameterStore(sinon);
 
 					const client = prepareFakeClient('the-client', false, false);
 
@@ -342,22 +322,11 @@ describe('Client Create API', () => {
 					stubParameterResolves({
 						newClientsDatabases: { default: databaseId1 }
 					});
-
-					sinon.stub(Settings, 'get').returns({});
-
-					stubGetSecret(sinon); // secret {}
-
-					sinon.stub(ModelClient.prototype, 'multiSave')
-						.resolves(true);
-
-					stubMongoDBIndexCreator(sinon);
 				},
 				after: (res, sinon) => {
 
 					assertGetCurrentClients(sinon, ['the-client']);
 					assertGetIDClients(sinon, ['the-client']);
-
-					assertSecretsGet(sinon, serviceName);
 
 					const formattedClients = [{
 						code: 'the-client',
@@ -372,14 +341,269 @@ describe('Client Create API', () => {
 					}];
 
 					sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
-					assertMongoDBIndexCreator(sinon);
 
 					sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, ['the-client'], formattedClients);
 
 					commonAfterEach();
+					afterEachParameterStore(sinon);
 				}
 			}
 		]);
+
+		context('When model has additionalFields getter set', () => {
+			ApiTest(APICreate, '/api/client', [
+				{
+					description: 'Should create clients adding additionalFields when found in ID client',
+					request: {
+						data: { clients: ['the-client'] }
+					},
+					response: { code: 200 },
+					before: sinon => {
+
+						commonBeforeEach(sinon);
+						beforeEachParameterStore(sinon);
+
+						sinon.stub(ModelClient, 'additionalFields')
+							.get(() => ['extraField']);
+
+						getResolves(sinon, {
+							clients: [{
+								code: 'the-client',
+								status: ModelClient.statuses.active,
+								extraField: { amazingConfig: 'foo' }
+							}]
+						});
+
+						stubParameterResolves({
+							newClientsDatabases: { default: databaseId1 }
+						});
+
+					},
+					after: (res, sinon) => {
+
+						assertGetCurrentClients(sinon, ['the-client']);
+						assertGetIDClients(sinon, ['the-client']);
+
+						const formattedClients = [{
+							code: 'the-client',
+							status: ModelClient.statuses.active,
+							db: {
+								default: {
+									id: databaseId1,
+									database: `${serviceName}-the-client`
+								}
+							},
+							extraField: { amazingConfig: 'foo' }
+						}];
+
+						sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
+
+						sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, ['the-client'], formattedClients);
+
+						commonAfterEach();
+						afterEachParameterStore(sinon);
+					}
+				}, {
+					description: 'Should create clients not-adding additionalFields when fields not found in ID client',
+					request: {
+						data: { clients: ['the-client'] }
+					},
+					response: { code: 200 },
+					before: sinon => {
+
+						commonBeforeEach(sinon);
+						beforeEachParameterStore(sinon);
+
+						sinon.stub(ModelClient, 'additionalFields')
+							.get(() => ['extraField']);
+
+						getResolves(sinon, {
+							clients: [{
+								code: 'the-client',
+								status: ModelClient.statuses.active
+								// extraField not present
+							}]
+						});
+
+						stubParameterResolves({
+							newClientsDatabases: { default: databaseId1 }
+						});
+
+					},
+					after: (res, sinon) => {
+
+						assertGetCurrentClients(sinon, ['the-client']);
+						assertGetIDClients(sinon, ['the-client']);
+
+						const formattedClients = [{
+							code: 'the-client',
+							status: ModelClient.statuses.active,
+							db: {
+								default: {
+									id: databaseId1,
+									database: `${serviceName}-the-client`
+								}
+							}
+						}];
+
+						sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
+
+						sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, ['the-client'], formattedClients);
+
+						commonAfterEach();
+						afterEachParameterStore(sinon);
+					}
+				}, {
+					description: 'Should update client adding additionalFields when found in ID client',
+					request: {
+						data: { clients: ['the-client'] }
+					},
+					response: { code: 200 },
+					before: sinon => {
+
+						commonBeforeEach(sinon);
+						beforeEachParameterStore(sinon);
+
+						sinon.stub(ModelClient, 'additionalFields')
+							.get(() => ['extraField']);
+
+						getResolves(sinon, {
+							clients: [{
+								code: 'the-client',
+								status: ModelClient.statuses.active,
+								extraField: 123
+							}],
+							currentClients: [{
+								code: 'the-client',
+								status: ModelClient.statuses.active,
+								extraField: 456
+							}]
+						});
+
+						stubParameterResolves({
+							newClientsDatabases: { default: databaseId1 }
+						});
+					},
+					after: (res, sinon) => {
+
+						assertGetCurrentClients(sinon, ['the-client']);
+						assertGetIDClients(sinon, ['the-client']);
+
+						const formattedClients = [{
+							code: 'the-client',
+							status: ModelClient.statuses.active,
+							db: {
+								default: {
+									id: databaseId1,
+									database: `${serviceName}-the-client`
+								}
+							},
+							extraField: 123 // value was updated from 456 to 123
+						}];
+
+						sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
+
+						sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, ['the-client'], formattedClients);
+
+						commonAfterEach();
+						afterEachParameterStore(sinon);
+					}
+				}, {
+					description: 'Should update removing additionalFields when not found in ID client',
+					request: {
+						data: { clients: ['the-client'] }
+					},
+					response: { code: 200 },
+					before: sinon => {
+
+						commonBeforeEach(sinon);
+						beforeEachParameterStore(sinon);
+
+						sinon.stub(ModelClient, 'additionalFields')
+							.get(() => ['extraFieldA', 'extraFieldB']);
+
+						getResolves(sinon, {
+							clients: [{
+								code: 'the-client',
+								status: ModelClient.statuses.active
+							}],
+							currentClients: [{
+								code: 'the-client',
+								status: ModelClient.statuses.active,
+								extraFieldA: 123,
+								extraFieldB: 456
+							}]
+						});
+
+						stubParameterResolves({
+							newClientsDatabases: { default: databaseId1 }
+						});
+					},
+					after: (res, sinon) => {
+
+						assertGetCurrentClients(sinon, ['the-client']);
+						assertGetIDClients(sinon, ['the-client']);
+
+						const formattedClients = [{
+							code: 'the-client',
+							status: ModelClient.statuses.active,
+							db: {
+								default: {
+									id: databaseId1,
+									database: `${serviceName}-the-client`
+								}
+							},
+							$unset: ['extraFieldA', 'extraFieldB'] // unset the current fields to sync with ID
+						}];
+
+						sinon.assert.calledOnceWithExactly(ModelClient.prototype.multiSave, formattedClients);
+
+						sinon.assert.calledOnceWithExactly(APICreate.prototype.postSaveHook, ['the-client'], formattedClients);
+
+						commonAfterEach();
+						afterEachParameterStore(sinon);
+					}
+				}, {
+					description: 'Should return 500 when additionalFields are not valid',
+					request: {
+						data: { clients: ['the-client'] }
+					},
+					response: { code: 500 },
+					before: sinon => {
+
+						commonBeforeEach(sinon);
+						beforeEachParameterStore(sinon);
+
+						sinon.stub(ModelClient, 'additionalFields')
+							.get(() => 'extraField');
+
+						getResolves(sinon, {
+							clients: [{
+								code: 'the-client',
+								status: ModelClient.statuses.active
+							}],
+							currentClients: [{
+								code: 'the-client',
+								status: ModelClient.statuses.active,
+								extraFieldA: 123,
+								extraFieldB: 456
+							}]
+						});
+
+						stubParameterResolves({
+							newClientsDatabases: { default: databaseId1 }
+						});
+					},
+					after: (res, sinon) => {
+						secretsNotCalled(sinon);
+						sinon.assert.notCalled(Invoker.serviceCall); // id clients
+						sinon.assert.notCalled(ModelClient.prototype.get); // current clients
+						sinon.assert.notCalled(ModelClient.prototype.multiSave);
+						sinon.assert.notCalled(Invoker.call); // mongodb index creator
+					}
+				}
+			]);
+		});
 	});
 
 	context('When AWS SecretsManager is used for db config', () => {
@@ -638,6 +862,39 @@ describe('Client Create API', () => {
 	describe('Errors', () => {
 		ApiTest(APICreate, '/api/client', [
 			{
+				description: 'Should return 500 when client not found in Janis ID',
+				request: {
+					data: { clients: clientCodes }
+				},
+				response: { code: 500 },
+				before: sinon => {
+
+					commonBeforeEach(sinon);
+
+					stubParameterNotFound();
+
+					mockModelClient();
+
+					getResolves(sinon, { clients: [] });
+
+					sinon.stub(Settings, 'get').returns(fakeDBSettings);
+
+					stubGetSecret(sinon);
+
+					sinon.stub(ModelClient.prototype, 'multiSave');
+
+					stubMongoDBIndexCreator(sinon);
+				},
+				after: (res, sinon) => {
+
+					secretsNotCalled(sinon);
+
+					sinon.assert.notCalled(ModelClient.prototype.multiSave);
+					sinon.assert.notCalled(Invoker.call);
+
+					commonAfterEach();
+				}
+			}, {
 				description: 'Should return 500 when the client model multiSave fails',
 				request: {
 					data: { clients: clientCodes }

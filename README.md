@@ -13,9 +13,38 @@ npm install @janiscommerce/client-creator
 ```
 
 ## :hammer_and_wrench: Configuration
-After installing this package you should create or update the following files:
 
-### Service Settings
+### AWS Parameter Store
+
+_Since 7.1.0_
+Retrieves database configurations for clients directly from AWS Parameter Store `{process.env.JANIS_SERVICE_NAME}-databases` and store configuration in `db` new field
+
+Parameter Store expected parsed content
+```json
+{
+  "newClientsDatabases": {
+    "default": "6728b0de39a492eee4fcdaa8"
+  }
+}
+```
+
+Client created
+```json
+{
+  "code": "client-code",
+  "db": {
+    "default": {
+      "id": "6728b0de39a492eee4fcdaa8",
+      "database": "service-name-client-code"
+    }
+  },
+  "status": "active"
+}
+```
+
+> :warning: The client models will be dispatched using @janiscommerce/model@^8.8.0
+
+### Service Settings ⚠️ **Deprecated**
 You should configure the database config in your service for the new clients using the package [Settings](https://www.npmjs.com/package/@janiscommerce/settings) and the `newClientsDatabases` field
 
 #### .janiscommercerc.json
@@ -68,7 +97,7 @@ If we create a `brand-new-client` client with the previous settings, we will get
 }
 ```
 
-### 🔑 Secrets
+### 🔑 Secrets ⚠️ **Deprecated**
 The package will get the **secret** using the *JANIS_SERVICE_NAME* environment variable.
 If the **secret** was found, the result will be merged with the settings found in the *`janiscommercerc.json`* in the `newClientsDatabases` field.
 
@@ -126,7 +155,7 @@ In the example will be used a new client **brand-new-client**.
 
 </details>
 
-### Skip Credential Fetching
+### Skip Credential Fetching ⚠️ **Deprecated**
 
 To skip the fetch of the credentials, it can be used the setting `skipFetchCredentials` set as **true**.
 

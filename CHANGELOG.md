@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [7.1.0-beta.0] - 2024-11-04
 ### Added
 - Using **AWS ParameterStore** to find Databases information
-- Using new format `db` from clients
+- Using new field `db` in clients for databases configuration
 
 ### Changed
 - _Internal_ GitHub actions improved
