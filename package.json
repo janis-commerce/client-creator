@@ -43,14 +43,13 @@
     "test": "tests"
   },
   "dependencies": {
-    "@aws-sdk/client-ssm": "^3.682.0",
+    "@aws-sdk/client-ssm": "^3.693.0",
     "@janiscommerce/api": "^8.0.3",
     "@janiscommerce/api-session": "^3.4.0",
     "@janiscommerce/aws-secrets-manager": "^1.1.1",
     "@janiscommerce/event-listener": "^5.0.2",
     "@janiscommerce/lambda": "^6.2.3",
-    "@janiscommerce/model": "^8.8.0-beta.1",
-    "@janiscommerce/mongodb-index-creator": "^4.0.0",
+    "@janiscommerce/model": "^8.8.0",
     "@janiscommerce/settings": "^1.0.1",
     "@janiscommerce/superstruct": "^1.2.1",
     "lllog": "^1.1.2"

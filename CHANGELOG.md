@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [7.1.0] - 2024-11-15
+### Added
+- Using **AWS ParameterStore** to find Databases information
+- Using new field `db` in clients for databases configuration
+
+### Changed
+- _Internal_ GitHub actions improved
+- _Internal_ Updated to `node@18`
+
+### Deprecated
+- **AWS Secrets Manager** usage
+- **Settings** usage
+
+### Removed
+- **Api Create** parameter `processClients` and feature
+
 ## [7.1.0-beta.0] - 2024-11-04
 ### Added
 - Using **AWS ParameterStore** to find Databases information
